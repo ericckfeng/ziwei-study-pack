@@ -1,0 +1,11 @@
+{
+  "name": "ziwei-study-pack",
+  "version": "1.1.0",
+  "private": true,
+  "description": "紫微一百四十四格研習包：單頁 HTML＋Markdown 筆記資料夾，給學員離線使用",
+  "scripts": {
+    "verify": "node tools/verify.mjs",
+    "build": "node tools/verify.mjs && node tools/build.mjs",
+    "deploy": "DEPLOY_DIR=../ericckfeng.github.io/ziwei-study-pack npm run build"
+  }
+}

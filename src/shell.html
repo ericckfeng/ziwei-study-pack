@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>紫微一百四十四格研習</title>
+<link rel="icon" href="data:,">
+<meta name="description" content="紫微斗數十二表 × 十二命宮逐格研讀、古籍格局對照、筆記與練習。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700;900&family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/*STYLE*/
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>紫微一百四十四格研習<small>十二表 × 十二命宮 ‧ 古籍格局對照 ‧ 以古籍與慧心齋主著作為本</small></h1>
+    <div class="vault">研習包 v/*VERSION*/<br><b>筆記：研習包裡的「筆記」資料夾</b></div>
+  </header>
+  <nav class="tabs" aria-label="分頁">
+    <a href="#home" data-tab="home">開始</a>
+    <a href="#study" data-tab="study">逐格研讀</a>
+    <a href="#overview" data-tab="overview">144 格總覽</a>
+    <a href="#patterns" data-tab="patterns">格局總表</a>
+    <a href="#stars" data-tab="stars">十四主星</a>
+    <a href="#quiz" data-tab="quiz">練習</a>
+    <a href="#books" data-tab="books">書目與路徑</a>
+    <a href="#backup" data-tab="backup">筆記與備份</a>
+  </nav>
+  <div id="banner" class="banner" hidden></div>
+
+  <section id="v-home"></section>
+
+  <section id="v-study" hidden>
+    <div class="picker">
+      <label>表號</label><div class="chips" id="tPick"></div>
+      <label>命宮</label><div class="chips" id="mPick"></div>
+    </div>
+    <div class="tbpats" id="tbPats"></div>
+    <div class="study">
+      <div>
+        <div class="chart" id="chart"></div>
+        <div class="legend"><span><i style="background:var(--cinnabar-soft)"></i>命宮</span><span><i style="background:var(--gold-soft)"></i>三方四正</span><span><i style="box-shadow:inset 0 0 0 2px var(--indigo-soft)"></i>夾宮</span><span><i style="border-color:var(--cinnabar)"></i>以此宮為命即成格</span><span><i style="border:1px dashed var(--gold)"></i>主星條件已具，待輔星</span></div>
+      </div>
+      <article class="card" id="detail"></article>
+    </div>
+    <div id="studyNotes"></div>
+  </section>
+
+  <section id="v-overview" hidden>
+    <p class="note-src">每列一表（紫微所在），每欄一命宮。紅字為以主星即可判定的古籍格局（不含殺破狼、命無正曜）。黃底是研讀中，綠底是已完成。點格子進入研讀。</p>
+    <div class="ovw"><table class="ov" id="ovTable"></table></div>
+  </section>
+
+  <section id="v-patterns" hidden>
+    <div class="filters">
+      <div class="chips" id="fCls" role="group" aria-label="判定層級"></div>
+      <div class="chips" id="fKind" role="group" aria-label="類別"></div>
+    </div>
+    <div class="ptw"><table class="pt" id="ptTable"></table></div>
+    <p class="note-src prose">判定層級：<b>A</b> 只看主星與地支即可判定；<b>B</b> 主星條件已具，還要看輔星、煞星或年干，表中列出主星條件成立的位置；<b>C</b> 純由輔星、煞星、四化構成，與十二表無關，請在萬用命盤產生器第 4 圖層判定。條件與古訣以《紫微斗數全書》通行本為底，各家寬嚴不一處已在備註說明。</p>
+  </section>
+
+  <section id="v-stars" hidden>
+    <p class="note-src prose">五行、斗分、化氣依《紫微斗數全書》通行說法，各家略有出入；性情關鍵詞為入門提要。四化依萬用命盤產生器所用之表（庚干：陽武同陰）。</p>
+    <div class="grid" id="starGrid"></div>
+  </section>
+
+  <section id="v-quiz" hidden></section>
+  <section id="v-books" hidden><div class="prose" id="books"></div></section>
+  <section id="v-backup" hidden></section>
+</div>
+<input type="file" id="inZip" accept=".zip,application/zip" hidden>
+<input type="file" id="inDir" webkitdirectory multiple hidden>
+<div class="toast" id="toast" role="status" hidden></div>
+<script src="config.js"></script>
+<script>
+/*CORE*/
+</script>
+<script>
+/*APP*/
+</script>
+</body>
+</html>
