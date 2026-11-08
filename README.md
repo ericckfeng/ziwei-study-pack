@@ -7,6 +7,8 @@
 ```
 npm run build      # 先驗證，再輸出 dist/紫微研習包/ 與 dist/紫微研習包.zip
 npm run verify     # 只跑驗證
+npm run workbook   # 產生 PDF 練習簿（需要 Chrome），之後的 build 會把它放進研習包與網站
+npm run deploy     # build 並複製網站版到 ../ericckfeng.github.io/ziwei-study-pack
 ```
 發給學員的是 `dist/紫微研習包.zip`。
 
@@ -17,6 +19,7 @@ npm run verify     # 只跑驗證
 - `src/config.js`：學員可手改的設定（筆記資料夾名稱、命盤產生器位置），會原樣複製到研習包。
 - `tools/verify.mjs`：和原研習頁的資料（`tools/reference-data.json`，由 gen2.py 產生）逐格比對，並測段落合併與 zip。
 - `tools/build.mjs`：輸出研習包；萬用命盤產生器取自 `../ziwei-astrology-tool/index.html`。
+- `tools/workbook.mjs`：PDF 練習簿（A4，190 頁）：封面、說明、進度表、十四主星、每表 14 頁（總覽、12 格、默寫測驗）、格局總表。頁面都固定一頁，所以鏡像格、格局位置能標頁碼；字型用 macOS 的蘋方與宋體。
 
 ## 筆記怎麼存
 - Chrome／Edge：學員選一次「筆記」資料夾，之後直接讀寫 .md 檔（File System Access API）。資料夾授權存在 IndexedDB，每次重開瀏覽器按一次「繼續」。

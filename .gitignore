@@ -1,3 +1,5 @@
 dist/
 .DS_Store
 ._*
+node_modules/
+.workbook.pdf
