@@ -7,5 +7,6 @@
     "verify": "node tools/verify.mjs",
     "build": "node tools/verify.mjs && node tools/build.mjs",
     "deploy": "DEPLOY_DIR=../ericckfeng.github.io/ziwei-study-pack npm run build"
-  }
+  },
+  "license": "Apache-2.0"
 }

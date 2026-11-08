@@ -26,3 +26,6 @@ npm run verify     # 只跑驗證
 
 ## 修改格局定義
 改 `src/core.js` 的 `DEFS`，跑 `npm run verify`（判定結果改變時，比對會失敗，確認無誤後重新產生 `tools/reference-data.json`），再 `npm run build`。
+
+## 授權
+Apache License 2.0，見 `LICENSE`。
