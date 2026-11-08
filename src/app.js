@@ -278,7 +278,7 @@ function openDrawer(path, title) {
 }
 
 /* ───────── 路由 ───────── */
-const VIEWS = ["home", "study", "overview", "patterns", "stars", "quiz", "books", "backup"];
+const VIEWS = ["home", "study", "overview", "patterns", "stars", "quiz", "books", "backup", "help"];
 let cur = { t: 1, m: 0 }, fCls = "all", fKind = "all";
 function view() { const h = location.hash.slice(1); if (/^g\d{4}$/.test(h)) return "study"; return VIEWS.includes(h) ? h : "home"; }
 function route() {
@@ -361,7 +361,7 @@ function renderHome() {
         <li>每讀完一張表，到「練習」做幾題，答錯的題目之後會再出現。</li>
         <li>常到「筆記與備份」看筆記存在哪裡，記得備份。</li>
       </ol>
-      <p class="note-src" style="margin-top:14px">喜歡手寫？<a href="紫微144格練習簿.pdf" download>下載 PDF 練習簿</a>（A4，每格一頁，附自我測驗），印出來搭配實體書讀。</p>
+      <p class="note-src" style="margin-top:14px">第一次用？先看<a href="#help">使用說明</a>。喜歡手寫？<a href="紫微144格練習簿.pdf" download>下載 PDF 練習簿</a>（A4，每格一頁，附自我測驗），印出來搭配實體書讀。</p>
     </div>
     <div class="card">
       <h2>研讀進度</h2>
@@ -635,6 +635,41 @@ function renderBooks() {
   </ul>`;
 }
 
+/* ───────── 使用說明（和課程群組公告同一份內容） ───────── */
+function renderHelp() {
+  $("#help").innerHTML = `
+  <h2>這是什麼</h2>
+  <p>紫微斗數十二表 × 十二命宮共 144 格的研習工具。不用安裝、不用註冊，建議用電腦的 Chrome 或 Edge。${ONLINE ? "" : "你現在用的是離線版，沒有網路也能用。"}</p>
+  <ul>
+    <li><b>逐格研讀</b>：選表號和命宮，看盤面、三方四正、格局古訣、鏡像格。</li>
+    <li><b>寫筆記</b>：盤面下方直接打字，會自動存檔。</li>
+    <li><b>看進度</b>：「開始」頁會顯示讀到哪裡，並帶你讀下一格。</li>
+    <li><b>練習</b>：隨機出題，答錯的題目之後會再出現。</li>
+  </ul>
+  <h2>第一次使用，請先做這一步</h2>
+  <ol>${ONLINE
+    ? `<li>在電腦上建一個空資料夾，例如「紫微筆記」。</li>
+    <li>按上方的「選擇筆記資料夾」，選剛剛那個資料夾。</li>
+    <li>跳出「建立筆記」時按確定。</li>`
+    : `<li>按上方的「選擇筆記資料夾」。</li>
+    <li>選研習包裡的「${esc(CFG.notesDir)}」資料夾（選到整個研習包資料夾也可以，會自動進去）。</li>`}
+  </ol>
+  <p>之後寫的筆記都會存成檔案放在這個資料夾裡，換電腦時整個資料夾帶走就好。每次重新打開瀏覽器，上方會出現「繼續」按鈕，按一下就能接著寫。</p>
+  <p>${S.canFolder ? `<button class="btn" data-act="chooseFolder">選擇筆記資料夾</button>` : `<b>這個瀏覽器不能直接存到資料夾</b>，請看下一段。`}</p>
+  <h2>用手機、iPad、Safari 的同學</h2>
+  <p>一樣可以讀、寫筆記，但筆記會存在瀏覽器裡。請記得到「<a href="#backup">筆記與備份</a>」按「匯出備份」，把 zip 檔存好。也請不要用無痕視窗，關掉後筆記就會消失。</p>
+  <h2>喜歡手寫的同學</h2>
+  <p>可以<a href="紫微144格練習簿.pdf" download>下載 PDF 練習簿</a>（A4，190 頁）：每格一頁，附手寫欄和每張表的默寫測驗，印出來搭配書讀。</p>
+  <h2>沒有網路時</h2>
+  <p>${ONLINE ? `頁首右上角有「<a href="紫微研習包.zip" download>下載離線版</a>」（約 9MB，含 PDF 練習簿），解壓縮後雙擊「紫微研習.html」，沒有網路也能用。` : `你現在用的就是離線版。研習包資料夾整個複製或壓縮帶走即可。`}離線版和線上版可以共用同一個筆記資料夾；筆記存在瀏覽器裡的話，兩邊是分開的，要用「匯出備份」再「匯入」搬過去。</p>
+  <h2>建議讀法</h2>
+  <p>十四主星 → 表一逐格讀完 → 鏡像的表七 → 表二↔表八……共六對。每讀完一張表，到「<a href="#quiz">練習</a>」把範圍設成那張表，做到全對。更詳細的學習路徑見「<a href="#books">書目與路徑</a>」。</p>
+  <h2>隱私</h2>
+  <p>筆記只存在你自己的電腦或瀏覽器裡，不會上傳到任何地方。</p>
+  <h2>進階：Obsidian、Typora</h2>
+  <p>筆記都是一般的 Markdown（.md）檔，可以用 Obsidian「開啟資料夾作為 vault」或 Typora 打開同一個筆記資料夾。切回研習頁時會自動重新讀取，但請不要兩邊同時改同一則筆記。</p>`;
+}
+
 /* ───────── 筆記與備份 ───────── */
 function renderBackup() {
   const n = [...S.notes.keys()].length;
@@ -670,5 +705,5 @@ $("#inDir").addEventListener("change", async e => {
 (async () => {
   if (ONLINE) $(".vault").innerHTML = `線上版・<a href="紫微研習包.zip" download>下載離線版</a><br><b>筆記：你選的筆記資料夾</b>`;
   await boot(); await loadWrong();
-  renderBooks(); renderBanner(); route();
+  renderBooks(); renderHelp(); renderBanner(); route();
 })();
