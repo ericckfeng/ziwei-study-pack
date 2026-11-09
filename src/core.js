@@ -641,7 +641,7 @@ tags: [紫微格局]
 function potLines(s) {
   const P = BOOK.POT[s];
   return [["精神潛能", P.mind], ["物質潛能", P.body], ["幸運顏色", P.lucky], ["矯正顏色", P.fix], ["最大精神剋星", P.kMind], ["最大物質剋星", P.kBody],
-    ["心理機制", P.core], ["精神轉化", P.tMind], ["物質轉化", P.tBody], ["最適環境", P.jobs]].map(([k, v]) => `- ${k}：${v}`).join("\n");
+    ["心理機制", P.core], ["精神轉化", P.tMind], ["物質轉化", P.tBody], ["行業參考（研讀筆記歸納，原書未列）", P.jobs]].map(([k, v]) => `- ${k}：${v}`).join("\n");
 }
 function starNote(s) {
   const S = STARS[s], HS = BOOK.HUA_STAR[s];

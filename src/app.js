@@ -33,7 +33,7 @@ function caseHTML(c, { links = true } = {}) {
 const POT_KV = [["精神潛能", "mind"], ["物質潛能", "body"], ["幸運顏色", "lucky"], ["矯正顏色", "fix"], ["精神剋星", "kMind"], ["物質剋星", "kBody"]];
 const potAlt = (s, f) => { const A = BOOK.POT_ALT[s]; return A && A[f] && A[f] !== BOOK.POT[s][f] ? `<span class="alt" title="${esc(A.src)}">另一份筆記：${A[f]}</span>` : ""; };
 const potKV = s => `<dl class="kv pk">${POT_KV.map(([k, f]) => `<dt>${k}</dt><dd>${BOOK.POT[s][f]}${potAlt(s, f)}</dd>`).join("")}</dl>`;
-const potMore = s => { const P = BOOK.POT[s]; return `<details class="pmore"><summary>心法與適合行業</summary><p>${P.core}</p><p><b>精神轉化</b>　${P.tMind}</p><p><b>物質轉化</b>　${P.tBody}</p><p><b>最適環境</b>　${P.jobs}</p></details>`; };
+const potMore = s => { const P = BOOK.POT[s]; return `<details class="pmore"><summary>心法（摘要）與行業參考</summary><p>${P.core}</p><p><b>精神轉化</b>　${P.tMind}</p><p><b>物質轉化</b>　${P.tBody}</p><p><b>行業參考</b>　${P.jobs}<br><span class="note-src">行業清單是研讀筆記的歸納，原書沒有列；原書說星曜潛能不限於特定工作。</span></p></details>`; };
 const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const sample = (a, n) => shuffle(a).slice(0, n);
 const ONLINE = location.protocol !== "file:";   // 從網站開啟（GitHub Pages），而不是研習包裡的檔案
@@ -563,7 +563,7 @@ function renderPotential() {
     <h2>四個調和工具</h2>
     <div class="ovw"><table class="hm dims"><thead><tr><th scope="col">工具</th><th scope="col">作用</th><th scope="col">用法</th></tr></thead>
       <tbody>${B.POT_TOOLS.map(([k, a, b]) => `<tr><th scope="row">${k}</th><td>${a}</td><td>${b}</td></tr>`).join("")}</tbody></table></div>
-    <h2>潛能調和六步驟</h2>
+    <h2>運用潛能的方法</h2>
     <ol>${B.POT_STEPS.map(([k, v]) => `<li><b>${k}</b>：${v}</li>`).join("")}</ol>
   </div>
   <h3 class="sec">諸星潛能一覽（十四主星＋祿存、天馬）</h3>
@@ -576,7 +576,7 @@ function renderPotential() {
   <p class="note-src">書中以雙星坐命分四型：精神近似物質相反（武破）、精神相反物質近似（武府）、兩者皆近（同梁）、兩者皆不同（紫破）。兩星有衝突時，把一顆放在本職、另一顆放在副業或業餘。坐這兩顆星的格坐這兩顆星：${(() => { const cs = CELLS.filter(c => c.stars.includes(potA) && c.stars.includes(potB)); return cs.length ? cs.map(c => `<button class="chip" data-go="${c.id}">${label(c)}</button>`).join(" ") : "這兩顆星不會同宮。"; })()}</p>
   <h3 class="sec">七個命例</h3>
   <div class="cases">${CASES.filter(c => c.src === "pot").map(c => caseHTML(c)).join("")}</div>
-  <div class="prose wide"><h2>宮位與大限流年</h2><ul>${B.POT_PALACE.map(x => `<li>${x}</li>`).join("")}</ul></div>`;
+  <div class="prose wide"><h2>命身、宮位與大限</h2><ul>${B.POT_PALACE.map(x => `<li>${x}</li>`).join("")}</ul></div>`;
 }
 $("#v-potential").addEventListener("click", e => { const b = e.target.closest("[data-pp]"); if (!b) return; const [k, s] = b.dataset.pp.split(":"); if (k === "a") potA = s; else potB = s; renderPotential(); });
 
@@ -658,7 +658,7 @@ function huaBookHTML() {
     <h2>六煞與化忌的差別</h2>
     <dl class="kv bk">${B.SHA.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>
     <h2>天羅地網（辰、戌）</h2>
-    <p>辰、戌二宮壓制多數星曜，唯有四化能扭轉其局限。</p>
+    <p>辰、戌二宮是命盤中比較特殊的宮位：除七殺、破軍、太陽、太陰、天府較不受限制外，大部分星曜坐此都容易受制；化祿、化權、化科、化忌入天羅地網，會使受制的情形有些變化（原書 p.116）。</p>
     <dl class="kv bk">${B.TIANLUO.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>
     <h2>重疊看盤：每一層以哪組四化為主</h2>
     <div class="ovw"><table class="hm dims"><thead><tr><th scope="col">層次</th><th scope="col">看法</th><th scope="col">主管</th></tr></thead>
@@ -667,6 +667,7 @@ function huaBookHTML() {
     <p class="note-src">依書中生辰排盤，列出本命格位與大限；書中寫的表號和排盤不同時會標出。點「排盤」可在「生辰排盤」分頁看每一步。</p>
     <div class="cases">${Z.DYN.map(dynHTML).join("")}</div>
     <h2>研習心法</h2>
+    <p class="note-src">以下三點是研讀筆記的歸納，原書沒有這一章，僅供參考。</p>
     <ul>${B.HUA_END.map(x => `<li>${x}</li>`).join("")}</ul>
     <h2>四十個命例</h2>
     <p class="note-src">四十個命例的表號、命宮、生辰都已逐張對照原書命盤（標示頁碼），研讀筆記抄錯之處寫在各例的「校勘」。程式另依生辰排盤（命宮、五行局、紫微）並核對命宮輔煞：${CASES.filter(c => c.src === "hua" && c.bFit).length} 例與原書命盤完全一致；褚女士、戚女士、柏女士三例是原書的五行局與命宮納音不合，以原書命盤為準。點格名就能看盤。</p>
