@@ -33,7 +33,7 @@ function caseHTML(c, { links = true } = {}) {
 const POT_KV = [["精神潛能", "mind"], ["物質潛能", "body"], ["幸運顏色", "lucky"], ["矯正顏色", "fix"], ["精神剋星", "kMind"], ["物質剋星", "kBody"]];
 const potAlt = (s, f) => { const A = BOOK.POT_ALT[s]; return A && A[f] && A[f] !== BOOK.POT[s][f] ? `<span class="alt" title="${esc(A.src)}">另一份筆記：${A[f]}</span>` : ""; };
 const potKV = s => `<dl class="kv pk">${POT_KV.map(([k, f]) => `<dt>${k}</dt><dd>${BOOK.POT[s][f]}${potAlt(s, f)}</dd>`).join("")}</dl>`;
-const potMore = s => { const P = BOOK.POT[s]; return `<details class="pmore"><summary>心法（摘要）與行業參考</summary><p>${P.core}</p><p><b>精神轉化</b>　${P.tMind}</p><p><b>物質轉化</b>　${P.tBody}</p><p><b>行業參考</b>　${P.jobs}<br><span class="note-src">行業清單是研讀筆記的歸納，原書沒有列；原書說星曜潛能不限於特定工作。</span></p></details>`; };
+const potMore = s => { const P = BOOK.POT[s]; return `<details class="pmore"><summary>原書要點與行業參考</summary><p>${P.core}</p><p><b>精神轉化</b>　${P.tMind}</p><p><b>物質轉化</b>　${P.tBody}</p><p><b>行業參考</b>　${P.jobs}<br><span class="note-src">行業清單是研讀筆記的歸納，原書沒有列；原書說星曜潛能不限於特定工作。</span></p></details>`; };
 const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const sample = (a, n) => shuffle(a).slice(0, n);
 const ONLINE = location.protocol !== "file:";   // 從網站開啟（GitHub Pages），而不是研習包裡的檔案
