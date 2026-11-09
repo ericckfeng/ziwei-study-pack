@@ -306,7 +306,8 @@ const SHA = [
 
 // 兩份研讀筆記說法不同之處：以 POT（《開發潛能》研讀筆記）為主，這裡列另一份的說法，請對照原書
 const POT_ALT = {
-  "天梁": { src: "《紫微斗數與四化星》及潛能應用研讀指南", mind: "承擔、蔭庇", body: "解決紛擾、化險為夷", lucky: "深褐色或墨綠色", fix: "金黃色", kMind: "自私自利", kBody: "缺乏敬重道德的環境" },
+  // 精神潛能「蔭」、物質潛能「事半功倍」已由原書 p.179 確認，以 POT 為準；顏色與剋星尚未對照原書
+  "天梁": { src: "《紫微斗數與四化星》及潛能應用研讀指南", lucky: "深褐色或墨綠色", fix: "金黃色", kMind: "自私自利", kBody: "缺乏敬重道德的環境" },
 };
 
 const api = { HUA_SRC, HUA_INTRO, HUA_DIMS, HUA_DIM, HUA_STAR, HUA_BOOK, HUA_AUX, TIANLUO, OVERLAY, HUA_END,

@@ -80,7 +80,7 @@ bc = Z.birthChart({ g: "辛", m: 10, d: 27, h: 3, sex: "男" });   // 潘先生�
 assert.deepStrictEqual([bc.daxian[1].gz, bc.daxian[1].from], ["乙未", 16]);
 assert.equal(Z.CASES.filter(c => c.bFit).length, 33, "生辰排出的命宮主星與書中相同");
 assert.ok(Z.CASES.every(c => c.auxCheck.every(a => a.ok)), "命宮輔煞全部落在命宮");
-assert.equal(Z.CASES.find(c => c.who === "丙女士").shenBad, true, "丙女士身宮矛盾");
+{ const c = Z.CASES.find(c => c.who === "丙女士"); assert.ok(c.ok && !c.shenBad && c.cells[0] === "0406", "丙女士依原書：表4・命午，身宮戌天同"); }
 for (const [n, t] of Object.entries(Z.BOOK.HUA_PALACE)) assert.ok(Z.HUA_NAMES.includes(n) && t.split("；").every(x => x.length > 2), n + " 十二宮顯像");
 // 資料檔：十干四化（日記用）星名須與四化表一致；命例欄位與生辰格式
 for (const g of Z.STEMS) assert.deepStrictEqual(Z.BOOK.DIARY_HUA[g].map(r => r[0]), Z.SIHUA[g].map((s, i) => s + "化" + Z.HUA[i]), g + "干十干四化");
