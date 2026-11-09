@@ -107,6 +107,7 @@ for (const [n, t] of Object.entries(Z.BOOK.HUA_PALACE)) assert.ok(Z.HUA_NAMES.in
     prev = c;
   }
   assert.ok(n > 73000);
+  assert.deepStrictEqual(["1949-10-01", "2000-01-01", "1900-01-01"].map(Z.dayGanzhi), ["甲子", "戊午", "甲戌"], "日干支");
 }
 // 資料檔：十干四化（日記用）星名須與四化表一致；命例欄位與生辰格式
 for (const g of Z.STEMS) assert.deepStrictEqual(Z.BOOK.DIARY_HUA[g].map(r => r[0]), Z.SIHUA[g].map((s, i) => s + "化" + Z.HUA[i]), g + "干十干四化");

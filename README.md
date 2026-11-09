@@ -34,7 +34,7 @@ npm run deploy     # build 並複製網站版到 ../ericckfeng.github.io/ziwei-s
 ## 四化
 - `core.js` 的 `SIHUA`（四化表）、`HUA_TXT`（39 則通行說法，非原書文字）、`HUA_BOOK`（《紫微四化星》要點，待補）。
 - 四化入表：`huaPlaces`、`huaPairs`、`relOf`。輔星、煞星：`stemStars` 依天干安祿存、羊陀、魁鉞；`auxPositions` 依學員指定安左右（支序和 ≡ 2）；昌曲、空劫共用時辰，由 `HOUR_AT`／`HOUR_OF` 互推；`jiaAt` 判斷夾宮。火鈴需年支與男女，和四化無關，不安。
-- 筆記：`四化/十干四化.md`、`四化/我的四化星性.md`（每化一段），日記存在 `四化日記/YYYY-MM-DD.md`，一天一篇，天干由學員查萬年曆自選。
+- 筆記：`四化/十干四化.md`、`四化/我的四化星性.md`（每化一段），日記存在 `四化日記/YYYY-MM-DD.md`，一天一篇，天干依日期自動帶出（`dayGanzhi`，以 1949-10-01 甲子日為基準），學員可改選；改日期時，自動帶出的天干會跟著換。
 
 ## 生辰排盤與命例核對
 - 陽曆轉農曆：`solarToLunar`／`solarBirth` 用內建的 `Intl` 中國曆（ICU），不帶萬年曆表；支援 1900–2100 年。晚子時預設算隔天、閏月預設依本月（可在介面切換）。`npm run verify` 會逐日檢查 1900–2100 年的換算連續性。

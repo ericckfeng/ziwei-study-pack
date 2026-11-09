@@ -787,7 +787,8 @@ $("#v-sihua").addEventListener("click", e => {
 $("#v-sihua").addEventListener("toggle", e => { if (e.target.matches("details.sixstars")) sixOpen = e.target.open; }, true);
 
 /* ───────── 四化日記 ───────── */
-let diarySel = null, diaryFilter = "all", newStem = null, newDate = null;
+let diarySel = null, diaryFilter = "all", newStem = null, newDate = null, stemManual = false;
+const autoStem = d => okDate(d) ? Z.dayGanzhi(d)[0] : null;
 const DIARY_RE = /^四化日記\/\d{4}-\d{2}-\d{2}\.md$/;
 const diaries = () => [...S.notes.keys()].filter(p => DIARY_RE.test(p)).sort().reverse();
 async function noteExists(p) {
@@ -808,11 +809,12 @@ function renderDiary() {
   if (diarySel && !S.notes.has(diarySel)) diarySel = null;
   if (!diarySel && list.length) diarySel = list[0];
   newDate ||= ymd(new Date());
+  if (!stemManual) newStem = autoStem(newDate);
   const shown = list.filter(p => diaryFilter === "all" || stemOf(p) === diaryFilter);
   const excerpt = p => Z.getSection(S.notes.get(p), "今日事件").split("\n")[0].slice(0, 40);
   const left = `<article class="card"><h2>寫一篇</h2>
       <div class="field"><label for="dDate">日期</label><span class="hint">預設今天，可以改成之前的日子補寫。</span><input type="date" id="dDate" value="${newDate}"></div>
-      <div class="field"><label>當天天干</label><span class="hint">請查萬年曆的日干支，例如「丁亥日」就選丁。</span>
+      <div class="field"><label>當天天干</label><span class="hint">${okDate(newDate) ? `${esc(newDate)} 是${Z.dayGanzhi(newDate)}日，已自動選${Z.dayGanzhi(newDate)[0]}。${stemManual && newStem !== autoStem(newDate) ? `<b>你改選了${newStem}</b>，<button class="linkbtn" data-dauto>改回自動</button>。` : ""}` : "選日期後會自動帶出當天天干。"}</span>
         <div class="chips">${STEMS.map(g => `<button class="chip" data-dg="${g}" aria-pressed="${g === newStem}">${g}</button>`).join("")}</div>
         ${newStem ? `<div class="note-src" style="margin-top:6px">${SIHUA[newStem].map((s, i) => `${badge(i)} ${s}化${HUA[i]}：${esc(Z.diaryHua(newStem, i))}`).join("<br>")}</div>` : ""}</div>
       <div class="row" style="margin-top:14px"><button class="btn" data-dnew>開始寫</button></div></article>
@@ -821,7 +823,7 @@ function renderDiary() {
       <div class="dlist">${shown.map(p => `<button class="ditem" data-dopen="${esc(p)}" aria-pressed="${p === diarySel}"><b>${esc(Z.getFront(S.notes.get(p), "日期"))}</b><span>${esc(stemOf(p))}日</span><small>${esc(excerpt(p))}</small></button>`).join("") || `<p class="empty">${list.length ? "這個天干還沒有日記。" : "還沒有日記，從左上角開始寫第一篇。"}</p>`}</div></article>`;
   const right = diarySel ? diaryPanel(diarySel) : `<article class="card"><h2>四化日記</h2>
     <p>每天觀察當日天干的四化，對照自己當天的念頭與事件。寫久了，會慢慢分辨哪些是星曜的特性、哪些是自己的投射。</p>
-    <ol class="steps"><li>選日期，查萬年曆選當天的天干。</li><li>按「開始寫」，記下今天發生的事。</li><li>對照四化：哪件事像化祿、化權、化科、化忌？</li><li>過幾天回頭看，同一個天干的日子有沒有共同的味道。</li></ol>
+    <ol class="steps"><li>選日期，當天的天干會自動帶出。</li><li>按「開始寫」，記下今天發生的事。</li><li>對照四化：哪件事像化祿、化權、化科、化忌？</li><li>過幾天回頭看，同一個天干的日子有沒有共同的味道。</li></ol>
     <p class="note-src">喜歡手寫？<a href="紫微144格練習簿.pdf" download>PDF 練習簿</a>的四化日記章有甲日到癸日十個範本，印出來就能寫。</p></article>`;
   $("#v-diary").innerHTML = `<div class="study diary"><div class="dleft">${left}</div><div>${right}</div></div>`;
 }
@@ -840,7 +842,7 @@ async function newDiary() {
   if (!editable()) { toast("請先重新連接筆記資料夾"); return; }
   const d = newDate = $("#dDate").value;
   if (!okDate(d)) { toast("請先選日期"); return; }
-  if (!newStem) { toast("請先選當天的天干（查萬年曆的日干支）"); return; }
+  if (!newStem) { toast("請先選當天的天干"); return; }
   const p = Z.PATH.diary(d);
   if (await noteExists(p)) {
     if (!S.notes.has(p)) S.notes.set(p, await readFile(p));
@@ -853,7 +855,7 @@ async function newDiary() {
   let err = "";
   await queue(async () => { try { await persist(p, Z.diaryNote(d, newStem)); } catch (e) { err = e.message || String(e); } });
   if (err) { toast("沒有存到：" + err); return; }
-  diarySel = p; newStem = null; diaryFilter = "all"; renderDiary(); toast(`已建立 ${d} 的四化日記`);
+  diarySel = p; stemManual = false; diaryFilter = "all"; renderDiary(); toast(`已建立 ${d} 的四化日記`);
   $("#v-diary .notes textarea")?.focus();
 }
 async function changeStem(g) {
@@ -871,7 +873,10 @@ async function moveDiary(to) {
   await queue(async () => {
     try {
       const md = (S.mode === "folder" ? await readFile(from) : null) ?? S.notes.get(from);
-      await persist(np, Z.setDiaryDate(md, to)); await removeNote(from);
+      // 天干若是舊日期自動帶出的，就跟著新日期改；自己改選過的保留
+      let out = Z.setDiaryDate(md, to);
+      if (Z.getFront(md, "天干") === autoStem(Z.getFront(md, "日期"))) out = Z.setDiaryStem(out, autoStem(to));
+      await persist(np, out); await removeNote(from);
     } catch (e) { err = e.message || String(e); }
   });
   if (err) { toast("沒有改成：" + err); return; }
@@ -891,7 +896,8 @@ async function delDiary() {
 $("#v-diary").addEventListener("click", e => {
   const q = s => e.target.closest(s);
   const dg = q("[data-dg]"), df = q("[data-df]"), op = q("[data-dopen]"), chg = q("[data-dchg]");
-  if (dg) { newStem = dg.dataset.dg; newDate = $("#dDate").value; renderDiary(); }
+  if (dg) { newStem = dg.dataset.dg; stemManual = newStem !== autoStem($("#dDate").value); newDate = $("#dDate").value; renderDiary(); }
+  else if (q("[data-dauto]")) { stemManual = false; renderDiary(); }
   else if (df) { diaryFilter = df.dataset.df; renderDiary(); }
   else if (op) { flush(); diarySel = op.dataset.dopen; renderDiary(); }
   else if (chg) changeStem(chg.dataset.dchg);
@@ -899,7 +905,7 @@ $("#v-diary").addEventListener("click", e => {
   else if (q("[data-dmove]")) moveDiary($("#dMove").value);
   else if (q("[data-ddel]")) delDiary();
 });
-$("#v-diary").addEventListener("change", e => { if (e.target.id === "dDate") newDate = e.target.value; });
+$("#v-diary").addEventListener("change", e => { if (e.target.id === "dDate") { newDate = e.target.value; stemManual = false; renderDiary(); } });
 
 /* ───────── 生辰排盤 ───────── */
 // 依農曆生辰一步步排出命宮、身宮、五行局、紫微（＝144 格中的哪一格）與大限，並安年月時系輔煞
@@ -1143,7 +1149,7 @@ function renderHelp() {
     <li><b>四化學習</b>：「四化星性」熟記十干四化並寫星性筆記；「四化入表」看四化在十二表中同宮、三合、對宮、暗合的分布，與四化相關的輔星、煞星可選擇安或不安：祿存、羊陀、魁鉞隨天干自動排；左右指定一顆，另一顆自動安上；昌曲、空劫共用一個時辰，指定任一顆，另一組一起移動，不會排出不存在的盤。火鈴和四化無關，不安。安上後會列出四化同宮、被夾、三方四正會照的星。</li>
     <li><b>開發潛能</b>：慧心齋主《紫微斗數開發潛能》的重點：每顆星的精神潛能、物質潛能、幸運色、矯正色與剋星，雙星對照和七個命例。</li>
     <li><b>生辰排盤</b>：直接輸入陽曆生日與時間（自動換成農曆，1900–2100 年），或切換成農曆生辰輸入；晚子時、閏月的算法可以選。一步步看命宮、身宮、五行局、紫微怎麼排出來，落在 144 格的哪一格，並安上大限與年月時系的輔煞。可從下拉選單載入書中命例，對照書上的盤。練習裡的「排命宮」「定五行局」「安紫微」三種題型練的就是這幾步。</li>
-    <li><b>四化日記</b>：選日期、查萬年曆選當天天干，帶出當天四化寫日記。同一天已經寫過會提醒，不會覆蓋；可以補寫之前的日子。</li>
+    <li><b>四化日記</b>：選日期就會自動帶出當天的天干與四化（日干支依日期推算，也可以自己改選）。同一天已經寫過會提醒，不會覆蓋；可以補寫之前的日子。</li>
   </ul>
   <h2>第一次使用，請先做這一步</h2>
   <ol>${ONLINE

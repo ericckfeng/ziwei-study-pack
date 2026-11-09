@@ -332,6 +332,8 @@ function solarToLunar(y, m, d) {
   return { y: ly, g: GAN[n % 10], yb: BR[n % 12], m: parseInt(p.month, 10), leap: /bis/.test(p.month), d: +p.day };
 }
 /** 時刻 → 時辰（子=0）：23:00–00:59 子時，01:00–02:59 丑時…… */
+/** 陽曆日期的日干支（以 1949-10-01 甲子日為基準，60 日一循環） */
+const dayGanzhi = date => { const [y, m, d] = date.split("-").map(Number), n = mod(Math.round((Date.UTC(y, m - 1, d) - Date.UTC(1949, 9, 1)) / 864e5), 60); return GAN[n % 10] + BR[n % 12]; };
 const MN = "正二三四五六七八九十冬臘";
 const hourBranch = (H, M = 0) => Math.floor(((H + 1) % 24) / 2);
 /** 陽曆生辰 → 排盤用的農曆生辰。
@@ -867,7 +869,7 @@ tags: [紫微144格]
 ## 四化學習與四化日記
 - **四化星性**：點十干四化表裡的任一化，看通行說法，在下方寫自己的星性筆記（存在 \`四化/我的四化星性.md\`）。
 - **四化入表**：選天干與表號，看祿權科忌落在哪一宮、彼此是同宮、三合、對宮還是暗合。與四化相關的輔星、煞星可依需要安上：祿存、擎羊陀羅、天魁天鉞隨天干自動排；左輔右弼指定一顆，另一顆自動安上；文昌文曲、地空地劫共用一個時辰，指定任一顆或直接選時辰，其他一起排好。火星、鈴星需年支與男女，和四化無關，不安。
-- **四化日記**：選日期，再查萬年曆的日干支、選當天的天干（例如丁亥日選丁），就會帶出當天四化。每天一篇，存在 \`四化日記/\` 資料夾；同一天已經寫過時會提醒，不會覆蓋。可以補寫之前的日子。
+- **四化日記**：選日期就會自動帶出當天的日干支與四化（例如丁亥日帶出丁干四化），也可以自己改選。每天一篇，存在 \`四化日記/\` 資料夾；同一天已經寫過時會提醒，不會覆蓋。可以補寫之前的日子。
 
 ## 喜歡手寫
 研習包裡的 \`紫微144格練習簿.pdf\`（A4，213 頁）每格一頁，附手寫欄和每張表的默寫測驗；後面有四化學習章（十干各一頁）與甲日到癸日十個四化日記範本，印出來搭配書讀。
@@ -1111,7 +1113,7 @@ function normalizeImportPath(p) {
 const api = { BR, PAL, ORDER, SHORT, TABLES, CELLS, CELL, PATS, PK, BRIDGES, PARTNER, QUIET, SIHUA, STARS, BOOKS, DIV, EDIT, STATUS,
   mod, pad, cellId, twinOf, tname, cname, pfile, shortName, label, PATH,
   HUA, STEMS, HUA_LIST, HUA_NAMES, HUA_TXT, HUA_BOOK, BOOK, CASES, casesOf, caseWhere, cellLabel, birthTxt, DYN, huaPalaceAt,
-  GAN, NAYIN_NAME, JU_NAME, solarToLunar, hourBranch, solarBirth, LUNAR_MIN, LUNAR_MAX, mingAt, shenAt, palaceStem, juOf, ziweiAt, birthChart, auxOf, TIANMA, HUOLING, parseBirth, DATA_FILES, diaryHua, AUX, starShort, auxPartnerAt, auxPositions,
+  GAN, NAYIN_NAME, JU_NAME, solarToLunar, hourBranch, solarBirth, dayGanzhi, LUNAR_MIN, LUNAR_MAX, mingAt, shenAt, palaceStem, juOf, ziweiAt, birthChart, auxOf, TIANMA, HUOLING, parseBirth, DATA_FILES, diaryHua, AUX, starShort, auxPartnerAt, auxPositions,
   LUCKY, UNLUCKY, PAIRS, pairAt, LUCUN, KUIYUE, stemStars, jiaAt, HOUR_AT, HOUR_OF, relOf, huaPlaces, huaPairs,
   diaryNote, setDiaryStem, setDiaryDate,
   cellNote, tableNote, patNote, starNote, allNotes,
