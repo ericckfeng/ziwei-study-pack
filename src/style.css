@@ -213,3 +213,42 @@ table.ov td button.s1 .st{color:var(--gold)} table.ov td button.s2 .st{color:var
 .modal .row{justify-content:flex-end}
 .toast{z-index:40}
 @media print{nav.tabs,.banner,.notes,.btn{display:none!important}}
+/* 四化學習 */
+.hb{display:inline-block;font-style:normal;font-family:var(--f-body);font-weight:700;font-size:11px;line-height:1.45;padding:0 4px;border-radius:2px;color:var(--sheet);margin-left:2px;vertical-align:1px}
+.hb.hl{background:var(--jade)} .hb.hq{background:var(--gold)} .hb.hk{background:var(--indigo)} .hb.hj{background:var(--cinnabar)}
+table.hz{border-collapse:collapse;width:100%;background:var(--sheet);border:1px solid var(--rule)}
+table.hz th,table.hz td{border:1px solid var(--rule);padding:0;text-align:center}
+table.hz thead th{font-size:12px;color:var(--ink-2);font-weight:500;padding:6px 4px;background:var(--paper)}
+table.hz tbody th{font-family:var(--f-display);font-size:18px;padding:4px 10px;background:var(--paper)}
+.hcell{width:100%;min-height:44px;border:0;background:transparent;color:var(--ink);font-family:var(--f-display);font-weight:700;font-size:16px;cursor:pointer;padding:6px 2px}
+.hcell:hover{background:var(--indigo-soft)}
+.hcell[aria-pressed="true"]{background:var(--ink);color:var(--sheet)}
+.htxt{margin:0;font-size:15px}
+.hrow{font-size:14px;padding:3px 0}
+.hrow b{font-family:var(--f-display)}
+.rel{display:inline-block;padding:0 6px;border-radius:2px;font-size:13px;border:1px solid var(--rule)}
+.r0{background:var(--cinnabar-soft)} .r1{background:var(--gold-soft)} .r2{background:var(--indigo-soft)} .r3{background:var(--jade-soft)} .r4{background:var(--paper)}
+.hchart .pal{cursor:default}
+.hchart .pal:hover{background:var(--sheet)}
+.hchart .pal.hon,.hchart .pal.hon:hover{background:var(--indigo-soft)}
+.pal .stars .aux{font-weight:500;color:var(--indigo);font-size:14px}
+h3.sec{font-size:12px;letter-spacing:.14em;color:var(--ink-2);font-weight:500;margin:24px 0 8px}
+table.hm{border-collapse:collapse;width:100%;min-width:560px;font-size:13px}
+table.hm th,table.hm td{border:1px solid var(--rule);padding:5px 6px;text-align:center}
+table.hm thead th{background:var(--paper);font-weight:500}
+table.hm thead th small{display:block;font-family:var(--f-display);color:var(--ink-2);font-size:12px}
+table.hm tbody th{background:var(--paper)}
+table.hm tr.cur th .mini{background:var(--ink);color:var(--sheet);border-color:var(--ink)}
+table.hm tr.cur td{font-weight:700}
+table.hm tfoot td,table.hm tfoot th{font-size:12px;background:var(--paper);font-weight:500}
+/* 四化日記 */
+.study.diary{grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr)}
+@media (max-width:900px){.study.diary{grid-template-columns:1fr}}
+.dleft{display:flex;flex-direction:column;gap:12px}
+.dlist{display:flex;flex-direction:column;gap:4px;margin-top:10px;max-height:420px;overflow:auto}
+.ditem{display:grid;grid-template-columns:auto auto minmax(0,1fr);gap:8px;align-items:baseline;text-align:left;border:1px solid var(--rule);background:var(--paper);color:var(--ink);border-radius:3px;padding:6px 10px;cursor:pointer}
+.ditem b{font-family:var(--f-mono);font-weight:500}
+.ditem small{color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ditem[aria-pressed="true"]{border-color:var(--ink);background:var(--sheet)}
+input[type=date]{font:inherit;color:var(--ink);background:var(--paper);border:1px solid var(--rule);border-radius:4px;padding:6px 8px}
+.linkbtn{border:0;background:none;color:var(--indigo);cursor:pointer;padding:0;font-family:var(--f-display);font-weight:700;font-size:15px;text-decoration:underline}

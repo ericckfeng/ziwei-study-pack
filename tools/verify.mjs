@@ -24,4 +24,31 @@ const files = Z.allNotes("2026-11-08");
 const back = await Z.readZip(Z.makeZip(files.map(f => ({ path: "筆記/" + f.path, data: f.text }))));
 assert.equal(back.length, files.length); assert.equal(back[5].text, files[5].text);
 assert.equal(Z.normalizeImportPath("x/紫微研習包/筆記/144格/a.md"), "144格/a.md");
+// 四化
+assert.equal(Z.HUA_LIST.length, 40); assert.equal(Z.HUA_NAMES.length, 39);
+assert.deepStrictEqual(Object.keys(Z.HUA_TXT).sort(), [...Z.HUA_NAMES].sort(), "每一化都有通行說法");
+for (let mo = 0; mo < 12; mo++) for (const [a, start, dir] of [["左輔", 4, 1], ["文曲", 4, 1]]) {   // 左輔辰起順行、右弼戌起逆行；文曲辰起順行、文昌戌起逆行
+  const b = Z.mod(start + dir * mo), partner = Z.mod(10 - mo);
+  assert.equal(Z.auxPositions({ [a]: b })[Z.AUX[a]], partner, a + "對稱");
+  assert.equal(Z.auxPositions({ [Z.AUX[a]]: partner })[a], b);
+}
+assert.deepStrictEqual([...Array(12).keys()].filter(b => Z.auxPartnerAt(b) === b), [1, 7], "只有丑未同宮");
+const rels = g => Z.huaPairs(g).map(x => x.rels && [...new Set(x.rels)].join("/"));
+assert.equal(rels("甲")[1], "三合", "甲：廉祿武科恆三合");
+assert.equal(rels("庚")[4].split("/").every(r => r.startsWith("暗合")), true, "庚：武權陰忌恆暗合");
+assert.equal(Z.huaPairs("壬")[1].rels, null, "壬：左輔未安");
+assert.equal(new Set(Z.huaPairs("壬", { 右弼: 3 })[1].rels).size > 1, true);
+assert.equal(Z.huaPlaces(1, "壬", { 右弼: 3 })[2].b, Z.mod(2 - 3), "右弼卯→左輔亥");
+assert.equal(Z.relOf(6, 7), "暗合・鄰宮"); assert.equal(Z.relOf(2, 6), "三合"); assert.equal(Z.relOf(0, 6), "對宮");
+// 四化日記
+let dy = Z.diaryNote("2026-11-09", "丁");
+assert.equal(Z.getFront(dy, "天干"), "丁"); assert.match(Z.getSection(dy, "今日四化"), /化忌：\[\[巨門\]\]/);
+dy = Z.setSection(dy, "今日事件", "記帳");
+dy = Z.setDiaryDate(Z.setDiaryStem(dy, "辛"), "2026-11-07");
+assert.equal(Z.getFront(dy, "日期"), "2026-11-07"); assert.match(dy, /^# 2026-11-07　四化日記$/m);
+assert.match(Z.getSection(dy, "今日四化"), /化忌：文昌/); assert.equal(Z.getSection(dy, "今日事件"), "記帳");
+assert.deepStrictEqual(Z.sectionsOf(dy).map(x => x[0]), ["今日事件", "對應四化", "心得"]);
+assert.equal(Z.normalizeImportPath("備份/四化日記/2026-11-09.md"), "四化日記/2026-11-09.md");
+const my = files.find(f => f.path === Z.PATH.myHua).text;
+assert.equal(Z.sectionsOf(my).length, 39); assert.equal(Z.getSection(Z.setSection(my, "太陰化忌", "x"), "太陰化忌"), "x");
 console.log("全部通過：", files.length, "則筆記");

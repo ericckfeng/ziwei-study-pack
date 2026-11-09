@@ -6,6 +6,9 @@ const BR = "子丑寅卯辰巳午未申酉戌亥";
 const PAL = ["命宮","兄弟","夫妻","子女","財帛","疾厄","遷移","交友","事業","田宅","福德","父母"];
 const ORDER = ["紫微","天機","太陽","武曲","天同","廉貞","天府","太陰","貪狼","巨門","天相","天梁","七殺","破軍"];
 const SHORT = Object.fromEntries(ORDER.map((s, i) => [s, "紫機日武同廉府月貪巨相梁殺破"[i]]));
+// 主星組合依慣用叫法；其餘照 SHORT 拼
+const COMBO_NAME = { "日梁": "陽梁", "同月": "同陰", "日巨": "陽巨" };
+const comboOf = own => { const k = own.map(s => SHORT[s]).join(""); return COMBO_NAME[k] || k; };
 const SUN_DOWN = new Set([8,10,11,0,1]), MOON_DOWN = new Set([3,5,6]);   // 太陽／太陰落陷地支
 const mod = (a, n = 12) => ((a % n) + n) % n;
 const pad = n => String(n).padStart(2, "0");
@@ -140,7 +143,7 @@ for (let t = 1; t <= 12; t++) {
     const ks = PATS.filter(p => p.f(c)).map(p => p.key);
     PATS.forEach(p => { if (ks.includes(p.key)) p.occ.push(id); });
     CELLS.push({ id, t, m, stars: own, borrow: own.length ? [] : P[mod(m + 6)],
-      combo: own.length ? own.map(s => SHORT[s]).join("") : "空",
+      combo: own.length ? comboOf(own) : "空",
       tri: { 命: P[m], 財: P[mod(m + 8)], 官: P[mod(m + 4)], 遷: P[mod(m + 6)] },
       pats: ks, anhe: mod(1 - m), anheStars: P[mod(1 - m)], code: `${pad(t)}00${pad(m + 1)}0000003` });
   }
@@ -186,6 +189,93 @@ const BOOKS = [
  ["紫微斗數全書","明刊本","—","—","〈太微賦〉〈骨髓賦〉〈形性賦〉〈女命骨髓賦〉〈諸星問答論〉及定富局、定貴局。格局總表的古訣底本，各刊本文字略異。"],
 ];
 
+/* ───────── 四化 ───────── */
+const HUA = "祿權科忌";
+const STEMS = Object.keys(SIHUA);
+const HUA_LIST = STEMS.flatMap(g => SIHUA[g].map((star, i) => ({ g, i, star, name: star + "化" + HUA[i] })));
+const HUA_NAMES = [...new Set(HUA_LIST.map(h => h.name))];   // 39 個（乙、庚同為太陰化忌）
+const AUX = { "左輔": "右弼", "右弼": "左輔", "文昌": "文曲", "文曲": "文昌" };
+const AUX_SHORT = { "左輔": "左", "右弼": "右", "文昌": "昌", "文曲": "曲" };
+// 四化縮寫：太陽為陽、太陰為陰（甲干 廉破武陽）
+const HUA_SHORT = { ...SHORT, "太陽": "陽", "太陰": "陰" };
+const starShort = s => HUA_SHORT[s] || AUX_SHORT[s] || s;
+// 左輔辰起正月順行、右弼戌起正月逆行；文曲辰起子時順行、文昌戌起子時逆行。兩星支序和恆 ≡ 2，以丑未為軸對稱
+const auxPartnerAt = b => mod(2 - b);
+// 通行說法（入門提要，非《紫微四化星》原文）
+const HUA_TXT = {
+ "廉貞化祿":"囚星轉活，人緣、才藝、感情得以發揮，規範中能變通。",
+ "破軍化權":"開創力得到主導權，敢破敢立；易一意孤行，耗損加大。",
+ "武曲化科":"財星有條理，理財規劃、執行有方，以專業與信用得名。",
+ "太陽化忌":"付出不得回報、名聲受累；多應在男性長輩、眼目，或為他人操勞。",
+ "天機化祿":"思慮靈活而生財，企劃、變動帶來機會；多動多得，也易多心。",
+ "天梁化權":"庇蔭轉為主導，好照顧人、好管事，原則性強；易說教。",
+ "紫微化科":"形象穩重，受人敬重，有貴人提攜，遇事能緩和。",
+ "太陰化忌":"情緒內斂鬱結；田宅、積蓄、財物收縮，母親或伴侶等女性親屬方面多牽掛。",
+ "天同化祿":"享受、安逸、人際和樂，易得輕鬆之財；宜防懶散。",
+ "天機化權":"謀略得主導，擅規劃決策；思慮過度，變動頻繁。",
+ "文昌化科":"文書、考試、證照有利，文字表達得名。",
+ "廉貞化忌":"囚性加重，情緒糾結、是非官非、感情困擾；宜守規矩。",
+ "太陰化祿":"細膩得財，積蓄、房產、女性助力，感情溫潤。",
+ "天同化權":"由安逸轉為主動爭取，情緒表達強，經激發而有成。",
+ "天機化科":"思路清晰，善於分析規劃，以點子與專業受肯定。",
+ "巨門化忌":"口舌是非、誤會猜疑，言多必失；也可轉為深入研究。",
+ "貪狼化祿":"人緣佳、多才多藝，交際、娛樂、偏財機會多。",
+ "太陰化權":"柔中帶剛，掌理財務家務，對感情與財物有主導慾。",
+ "右弼化科":"得平輩或貴人協助，人和事順，間接獲益。",
+ "天機化忌":"思慮反覆、計畫生變、鑽牛角尖；手足或交通變動之擾。",
+ "武曲化祿":"正財順遂，務實執行帶來收益。",
+ "貪狼化權":"交際手腕強，企圖心旺；宜防貪多。",
+ "天梁化科":"清高受敬，逢凶有解；醫藥、宗教、公益方面有聲譽。",
+ "文曲化忌":"言語、契約、票據出錯，或感情多糾葛。",
+ "太陽化祿":"付出有回報，名聲帶財，人際廣，男性助力。",
+ "武曲化權":"決斷力強、執行剛猛，掌財務大權；易剛愎。",
+ "天同化科":"溫和得人緣，遇事能化解，生活和樂。",
+ "巨門化祿":"以言語、教學、研究、仲介得利，是非轉為助力。",
+ "太陽化權":"名聲擴大、領導欲強；易過度張揚。",
+ "文曲化科":"才藝、口才、藝術表現受賞識。",
+ "文昌化忌":"簽約、證件、成績出錯，宜細心覆核。",
+ "天梁化祿":"受庇蔭而得利，長輩、保險、醫藥方面得財；宜防施惠生紛擾。",
+ "紫微化權":"帝星掌權，領導力顯；易專斷。",
+ "左輔化科":"得上司、平輩相助，合作順利。",
+ "武曲化忌":"資金周轉困難、財務決策失誤，行事剛硬而孤。",
+ "破軍化祿":"破舊立新而得利，變動中有收穫，花費也多。",
+ "巨門化權":"說服力強，言語有分量；易強辯爭執。",
+ "太陰化科":"細膩與品味受肯定，女性貴人相助。",
+ "貪狼化忌":"欲望受挫或沉迷，交際、娛樂、桃花之困；宜節制。",
+};
+// 《紫微四化星》要點：待補（關鍵詞＋章節出處，不抄原文）
+const HUA_BOOK = {};
+
+/** 兩宮（支序）之間的關係 */
+function relOf(a, b) {
+  const d = mod(b - a);
+  if (d === 0) return "同宮";
+  if (d === 6) return "對宮";
+  if (d === 4 || d === 8) return "三合";
+  const adj = d === 1 || d === 11;
+  if (mod(a + b) === 1) return adj ? "暗合・鄰宮" : "暗合";
+  return adj ? "鄰宮" : "其他";
+}
+/** aux：{左輔: 支序, 文昌: 支序}，自動補上成對的另一顆 */
+function auxPositions(aux = {}) {
+  const o = {};
+  for (const [s, b] of Object.entries(aux)) if (AUX[s] && b != null) { o[s] = b; o[AUX[s]] = auxPartnerAt(b); }
+  return o;
+}
+/** 某表某干的四化落在哪一支；輔星未指定位置時 b 為 null */
+function huaPlaces(t, g, aux = {}) {
+  const at = auxPositions(aux);
+  return SIHUA[g].map((star, i) => ({ i, star, name: star + "化" + HUA[i],
+    b: AUX[star] ? (at[star] ?? null) : TABLES[t - 1].findIndex(a => a.includes(star)) }));
+}
+/** 十二表中，某干四化兩兩之間的關係：[{i, j, rels: [表1…表12]}]，有輔星未安時 rels 為 null */
+function huaPairs(g, aux = {}) {
+  const P = TABLES.map((_, k) => huaPlaces(k + 1, g, aux)), out = [];
+  for (let i = 0; i < 4; i++) for (let j = i + 1; j < 4; j++)
+    out.push({ i, j, rels: P[0][i].b == null || P[0][j].b == null ? null : P.map(p => relOf(p[i].b, p[j].b)) });
+  return out;
+}
+
 /* ───────── 名稱與路徑（相對於「筆記」資料夾） ───────── */
 const tname = t => `表${pad(t)}-紫微在${BR[t - 1]}`;
 const cname = c => `表${pad(c.t)}-命${BR[c.m]}`;
@@ -198,6 +288,9 @@ const PATH = {
   pat: p => `格局/${pfile(p)}.md`,
   star: s => `十四主星/${s}.md`,
   book: n => `書目/${n}.md`,
+  huaIndex: "四化/十干四化.md",
+  myHua: "四化/我的四化星性.md",
+  diary: d => `四化日記/${d}.md`,
 };
 
 /* ───────── 可編輯段落與寫作引導 ───────── */
@@ -216,6 +309,12 @@ const EDIT = {
     ["古籍（諸星問答論等）", "《全書》〈諸星問答論〉怎麼描述這顆星？"],
     ["慧心齋主觀點", "書中這顆星的性情、系列、喜忌。"],
     ["我的心得", "用三個關鍵詞形容這顆星；它和哪顆星同宮時變化最大？"],
+  ],
+  "四化星性": HUA_NAMES.map(n => [n, "書中重點（註明頁碼）、你自己的理解、生活中遇到的例子。"]),
+  "四化日記": [
+    ["今日事件", "今天發生了什麼事、起了什麼念頭？照實記下，先不要解釋。"],
+    ["對應四化", "哪件事像化祿、化權、化科、化忌？對應到哪顆星的星性？"],
+    ["心得", "回頭看：有沒有把自己的情緒投射到星曜上？下次遇到同樣的天干想觀察什麼？"],
   ],
 };
 const DEFAULT_KIND_SECTIONS = [["我的心得", "寫下你的想法。"]];
@@ -502,6 +601,8 @@ tags: [紫微144格]
 - [[暗合]]：暗合宮概念、五永久暗合橋
 - \`十四主星/\`：每顆主星一則
 - \`書目/\`：慧心齋主著作與古籍
+- \`四化/\`：[[十干四化]]（四化表、通行說法）與 [[我的四化星性]]（自己的四化筆記）
+- \`四化日記/\`：每天一篇，由研習頁「四化日記」建立
 
 ## 學習路徑
 1. 十四主星本性：[[紫微]] 起，對照《全書》諸星問答論與 [[紫微斗數新詮 四十周年增訂版]]。
@@ -509,7 +610,8 @@ tags: [紫微144格]
 3. 逐表逐格：先看表索引的「本表格局」，再從命子讀到命亥；命宮以 [[慧心齋主談命宮]] 為主。
 4. 鏡像對讀：表1↔表7、表2↔表8……，比較地支型格局的差異。
 5. 每讀完一表，回 [[格局總表]] 核對古訣；B 類格局到萬用命盤產生器第 4 圖層疊加輔星確認。
-6. 疊加四化與宮位：[[紫微四化星]]、[[慧心齋主談星際關係]]。
+6. 四化：在研習頁「四化學習」熟記十干四化與星性（[[十干四化]]、[[紫微四化星]]），再看四化入十二表的同宮、三合、對宮、暗合；每天寫四化日記。
+7. 疊加宮位：[[慧心齋主談星際關係]]。
 
 ## 十二表
 ${Array.from({ length: 12 }, (_, i) => `- [[${tname(i + 1)}]]`).join("\n")}
@@ -594,6 +696,11 @@ tags: [紫微144格]
 ## 練習
 研習頁的「練習」分頁會出題：某格命宮坐什麼星、成什麼格、鏡像格是哪一格。答錯的題目之後會再出現。
 
+## 四化學習與四化日記
+- **四化星性**：點十干四化表裡的任一化，看通行說法，在下方寫自己的星性筆記（存在 \`四化/我的四化星性.md\`）。
+- **四化入表**：選天干與表號，看祿權科忌落在哪一宮、彼此是同宮、三合、對宮還是暗合。左輔／右弼、文昌／文曲只要指定一顆的位置，另一顆自動安上。
+- **四化日記**：選日期，再查萬年曆的日干支、選當天的天干（例如丁亥日選丁），就會帶出當天四化。每天一篇，存在 \`四化日記/\` 資料夾；同一天已經寫過時會提醒，不會覆蓋。可以補寫之前的日子。
+
 ## 喜歡手寫
 研習包裡的 \`紫微144格練習簿.pdf\`（A4，190 頁）每格一頁，附手寫欄和每張表的默寫測驗，印出來搭配書讀。
 
@@ -613,6 +720,74 @@ tags: [紫微144格]
 `);
 }
 
+const huaLink = (s, i) => `[[我的四化星性#${s}化${HUA[i]}|${s}化${HUA[i]}]]`;
+function huaIndexNote() {
+  const rows = STEMS.map(g => `| ${g} | ${SIHUA[g].map((s, i) => huaLink(s, i).replace("|", "\\|")).join(" | ")} |`).join("\n");
+  const txt = STEMS.map(g => `### ${g}干\n` + SIHUA[g].map((s, i) => `- **${s}化${HUA[i]}**：${HUA_TXT[s + "化" + HUA[i]]}`).join("\n")).join("\n\n");
+  return clean(`---
+title: 十干四化
+類型: 索引
+tags: [紫微四化]
+---
+# 十干四化
+
+| 天干 | 化祿 | 化權 | 化科 | 化忌 |
+|---|---|---|---|---|
+${rows}
+
+四化表依萬用命盤產生器所用之表（戊：右弼化科；庚：陽武同陰；壬：左輔化科），各派略有出入。自己的星性筆記寫在 [[我的四化星性]]，每天的觀察寫在「四化日記」資料夾。
+
+## 輔星的位置
+左輔、右弼由出生月決定（左輔辰起正月順行，右弼戌起正月逆行）；文昌、文曲由出生時辰決定（文曲辰起子時順行，文昌戌起子時逆行）。所以兩星的支序和恆為 2（mod 12），以丑未為軸左右對稱：知道一顆，就知道另一顆；只有在丑、未才會同宮。
+
+## 通行說法
+以下是入門提要，不是《紫微四化星》原文；書中要點請對照原書，用自己的話寫進 [[我的四化星性]]。
+
+${txt}
+`);
+}
+function myHuaNote() {
+  return clean(`---
+title: 我的四化星性
+類型: 四化星性
+tags: [紫微四化]
+---
+# 我的四化星性
+
+每一化一段，寫書中重點（註明 [[紫微四化星]] 頁碼）、自己的理解和生活中的例子。研習頁「四化學習」會顯示對應的段落。四化表見 [[十干四化]]。
+
+` + HUA_NAMES.map(n => `## ${n}\n\n`).join("\n"));
+}
+function huaTodayText(g) {
+  if (!SIHUA[g]) return "（還沒選天干）";
+  return `${g}干四化：\n` + SIHUA[g].map((s, i) => `- 化${HUA[i]}：${AUX[s] ? s : `[[${s}]]`}　${huaLink(s, i)}：${HUA_TXT[s + "化" + HUA[i]]}`).join("\n");
+}
+function diaryNote(date, g) {
+  return clean(`---
+title: ${date} 四化日記
+類型: 四化日記
+日期: ${date}
+天干: ${g}
+tags: [四化日記]
+---
+# ${date}　四化日記
+
+## 今日四化
+${huaTodayText(g)}
+
+## 今日事件
+
+
+## 對應四化
+
+
+## 心得
+
+`);
+}
+const setDiaryStem = (md, g) => setSection(setFront(md, "天干", g), "今日四化", huaTodayText(g));
+const setDiaryDate = (md, d) => setFront(setFront(md, "日期", d), "title", `${d} 四化日記`).replace(/^# \d{4}-\d{2}-\d{2}(?=　四化日記)/m, "# " + d);
+
 /** 產生整個筆記資料夾：[{path, text}] */
 function allNotes(date) {
   const out = [];
@@ -622,6 +797,8 @@ function allNotes(date) {
   out.push({ path: "格局總表.md", text: patIndexNote(date) });
   ORDER.forEach(s => out.push({ path: PATH.star(s), text: starNote(s) }));
   BOOKS.forEach(b => out.push({ path: PATH.book(b[0]), text: bookNote(b) }));
+  out.push({ path: PATH.huaIndex, text: huaIndexNote() });
+  out.push({ path: PATH.myHua, text: myHuaNote() });
   out.push({ path: "README.md", text: readmeNote() });
   out.push({ path: "暗合.md", text: anheNote() });
   out.push({ path: "使用說明.md", text: guideNote() });
@@ -735,12 +912,14 @@ function normalizeImportPath(p) {
   p = p.replace(/\\/g, "/");
   const i = p.indexOf("筆記/");
   if (i >= 0) return p.slice(i + 3);
-  for (const top of ["144格/", "格局/", "十四主星/", "書目/"]) { const j = p.indexOf(top); if (j >= 0) return p.slice(j); }
+  for (const top of ["144格/", "格局/", "十四主星/", "書目/", "四化/", "四化日記/"]) { const j = p.indexOf(top); if (j >= 0) return p.slice(j); }
   return p.split("/").pop();
 }
 
 const api = { BR, PAL, ORDER, SHORT, TABLES, CELLS, CELL, PATS, PK, BRIDGES, PARTNER, QUIET, SIHUA, STARS, BOOKS, DIV, EDIT, STATUS,
   mod, pad, cellId, twinOf, tname, cname, pfile, shortName, label, PATH,
+  HUA, STEMS, HUA_LIST, HUA_NAMES, HUA_TXT, HUA_BOOK, AUX, starShort, auxPartnerAt, auxPositions, relOf, huaPlaces, huaPairs,
+  diaryNote, setDiaryStem, setDiaryDate,
   cellNote, tableNote, patNote, starNote, allNotes,
   getFront, setFront, getSection, setSection, sectionsOf, mergeNote, makeZip, readZip, normalizeImportPath };
 if (typeof module !== "undefined" && module.exports) module.exports = api; else root.ZW = api;
