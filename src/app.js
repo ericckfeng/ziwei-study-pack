@@ -906,15 +906,23 @@ $("#v-diary").addEventListener("change", e => { if (e.target.id === "dDate") new
 const GZ60 = Array.from({ length: 60 }, (_, i) => Z.GAN[i % 10] + BR[i % 12]);
 const MONTHS = "正二三四五六七八九十冬臘";
 const dayName = d => d <= 10 ? "初" + "一二三四五六七八九十"[d - 1] : d < 20 ? "十" + "一二三四五六七八九"[d - 11] : d === 20 ? "二十" : d < 30 ? "廿" + "一二三四五六七八九"[d - 21] : "三十";
-const bIn = { gz: "庚寅", m: 3, d: 5, h: 1, sex: "男", who: "" };
+const bIn = { mode: "solar", date: "2000-01-01", time: "12:00", lateZi: "next", leapRule: "same", gz: "庚寅", m: 3, d: 5, h: 1, sex: "男", who: "", lm: 3, leap: false, notes: [], err: "" };
+// 陽曆模式：把陽曆生日換成農曆，填進 bIn 的 gz、m、d、h
+function applySolar() {
+  const r = Z.solarBirth(bIn.date, bIn.time, { lateZi: bIn.lateZi, leapRule: bIn.leapRule });
+  bIn.err = r.error || "";
+  if (r.error) return;
+  Object.assign(bIn, { gz: r.g + r.yb, m: r.m, d: r.d, h: r.h, lm: r.lm, leap: r.leap, notes: r.notes });
+}
 function loadBirth(who) {
   const c = CASES.find(x => x.who === who && x.birth), d = Z.DYN.find(x => x.who === who), str = c ? c.birth : d?.birth;
   if (!str) return;
   const r = Z.parseBirth(str);
-  Object.assign(bIn, { gz: r.g + r.yb, m: r.m, d: r.d, h: r.h, sex: d ? d.sex : (who.endsWith("女士") ? "女" : "男"), who });
+  Object.assign(bIn, { mode: "lunar", gz: r.g + r.yb, m: r.m, d: r.d, h: r.h, lm: r.m, leap: false, notes: [], err: "", sex: d ? d.sex : (who.endsWith("女士") ? "女" : "男"), who });
   if (view() === "birth") renderBirth(); else location.hash = "birth";
 }
 function renderBirth() {
+  if (bIn.mode === "solar") applySolar(); else Object.assign(bIn, { lm: bIn.m, leap: false, notes: [], err: "" });
   const g = bIn.gz[0], yb = bIn.gz[1], bc = Z.birthChart({ g, m: bIn.m, d: bIn.d, h: bIn.h, sex: bIn.sex });
   const aux = Z.auxOf({ g, yb, m: bIn.m, h: bIn.h }), P = TABLES[bc.t - 1], cell = CELL[bc.cell];
   const hua = Object.fromEntries(SIHUA[g].map((s, i) => [s, i]));
@@ -926,19 +934,26 @@ function renderBirth() {
   let grid = "";
   for (let r = 0; r < 4; r++) for (let k = 0; k < 4; k++) {
     const b = DIV[r][k];
-    if (b === null) { if (r === 1 && k === 1) grid += `<div class="center"><div class="no">${bIn.gz}年 ${MONTHS[bIn.m - 1]}月${dayName(bIn.d)} ${BR[bIn.h]}時 ${bc.yang ? "陽" : "陰"}${bIn.sex}</div><div class="big">${label(cell)}</div>
+    if (b === null) { if (r === 1 && k === 1) grid += `<div class="center"><div class="no">${bIn.mode === "solar" ? `陽曆 ${bIn.date} ${bIn.time}<br>農曆 ` : ""}${bIn.gz}年 ${bIn.leap ? "閏" : ""}${MONTHS[bIn.lm - 1]}月${dayName(bIn.d)} ${BR[bIn.h]}時 ${bc.yang ? "陽" : "陰"}${bIn.sex}</div><div class="big">${label(cell)}</div>
       <div class="sub">${Z.JU_NAME[bc.ju]}（命宮${bc.gz}・${bc.nayin}）　身宮${BR[bc.shen]}（${bc.shenPal}）</div><div class="sub"><button class="chip" data-go="${bc.cell}">逐格研讀這一格</button></div></div>`; continue; }
     const pi = Z.mod(bc.ming - b), dx = bc.daxian.find(z => z.b === b);
     grid += `<div class="pal ${b === bc.ming ? "ming" : [4, 6, 8].includes(Z.mod(b - bc.ming)) ? "tri" : ""}"><div class="stars">${starAt(b) || `<span class="borrow">（${starsTxt(P[Z.mod(b + 6)])}）</span>`}</div>
       <span class="pn">${PAL[pi]}${b === bc.shen ? "・身" : ""}</span><span class="br">${GAN_OF(g, b)}${BR[b]}</span>${dx ? `<span class="dx">${dx.from}–${dx.to}</span>` : ""}</div>`;
   }
   const cs = CASES.filter(c => c.birth).concat(Z.DYN.filter(d => !CASES.some(c => c.who === d.who)));
-  $("#v-birth").innerHTML = `<div class="filters"><div class="row bform">
-      <label>年 ${sel("gz", GZ60.map(x => [x, x]))}</label><label>農曆 ${sel("m", [...MONTHS].map((t, i) => [i + 1, t + "月"]))}</label>
-      <label>${sel("d", Array.from({ length: 30 }, (_, i) => [i + 1, dayName(i + 1)]))}</label><label>${sel("h", [...BR].map((t, i) => [i, t + "時"]))}</label>
+  const solarForm = `<label>陽曆生日 <input type="date" data-bin="date" value="${bIn.date}" min="${Z.LUNAR_MIN}" max="${Z.LUNAR_MAX}"></label>
+      <label>時間 <input type="time" data-bin="time" value="${bIn.time}"></label>
+      <label>晚子時（23 點後）${sel("lateZi", [["next", "算隔天"], ["same", "算當天"]])}</label>
+      <label>閏月 ${sel("leapRule", [["same", "依本月"], ["split", "十六日起依下月"]])}</label>`;
+  const lunarForm = `<label>年 ${sel("gz", GZ60.map(x => [x, x]))}</label><label>農曆 ${sel("m", [...MONTHS].map((t, i) => [i + 1, t + "月"]))}</label>
+      <label>${sel("d", Array.from({ length: 30 }, (_, i) => [i + 1, dayName(i + 1)]))}</label><label>${sel("h", [...BR].map((t, i) => [i, t + "時"]))}</label>`;
+  $("#v-birth").innerHTML = `<div class="filters"><div class="chips" role="group" aria-label="輸入方式"><button class="chip" data-bmode="solar" aria-pressed="${bIn.mode === "solar"}">陽曆生日</button><button class="chip" data-bmode="lunar" aria-pressed="${bIn.mode === "lunar"}">農曆生辰</button></div>
+    <div class="row bform">
+      ${bIn.mode === "solar" ? solarForm : lunarForm}
       <label>${sel("sex", [["男", "男"], ["女", "女"]])}</label>
       <label>書中命例 <select data-bin="who"><option value="">—</option>${cs.map(c => `<option${c.who === bIn.who ? " selected" : ""}>${c.who}</option>`).join("")}</select></label></div>
-    <span class="note-src">農曆生辰；閏月、晚子時等各派處理不同，這裡不處理。火星鈴星依《全書》通行起法（年支起子時順數）。</span></div>
+    ${bIn.err ? `<div class="cflag">${esc(bIn.err)}</div>` : ""}
+    <span class="note-src">${bIn.mode === "solar" ? `陽曆換農曆用瀏覽器內建的中國曆，支援 1900–2100 年；年干支以正月初一為界。請輸入出生地的當地時間（台灣 1945–1979 年部分年份實施夏令時間，出生時間要先減一小時）。${bIn.notes.length ? "<br>" + bIn.notes.map(esc).join("；") + "。" : ""}` : "農曆生辰；閏月請自行選擇依本月或下月。"}火星鈴星依《全書》通行起法（年支起子時順數）。</span></div>
   <div class="study"><div><div class="chart">${grid}</div>
     <div class="legend"><span><i style="background:var(--cinnabar-soft)"></i>命宮</span><span><i style="background:var(--gold-soft)"></i>三方四正</span><span>宮名後「・身」為身宮；宮格下方中間為大限歲數</span></div></div>
   <article class="card"><h2>排盤四步</h2>
@@ -955,6 +970,7 @@ function renderBirth() {
   <p class="note-src">生辰排盤只決定 144 格中的哪一格與輔煞位置；四化、大限流年的疊盤請看「四化學習」。驗證：本頁的排盤公式，用書中命例的生辰核對過，${CASES.filter(c => c.bFit).length}／${CASES.filter(c => c.bc).length} 例排出的命宮主星與書中相同，命宮輔煞 ${CASES.reduce((n, c) => n + c.auxCheck.filter(a => a.ok).length, 0)}／${CASES.reduce((n, c) => n + c.auxCheck.length, 0)} 顆全部相符。</p>`;
 }
 const GAN_OF = (g, b) => Z.GAN[Z.palaceStem(g, b)];
+$("#v-birth").addEventListener("click", e => { const b = e.target.closest("[data-bmode]"); if (b) { bIn.mode = b.dataset.bmode; bIn.who = ""; renderBirth(); } });
 $("#v-birth").addEventListener("change", e => {
   const k = e.target.dataset.bin; if (!k) return;
   if (k === "who") { if (e.target.value) loadBirth(e.target.value); else { bIn.who = ""; renderBirth(); } return; }
@@ -1126,7 +1142,7 @@ function renderHelp() {
     <li><b>練習</b>：隨機出題，答錯的題目之後會再出現。</li>
     <li><b>四化學習</b>：「四化星性」熟記十干四化並寫星性筆記；「四化入表」看四化在十二表中同宮、三合、對宮、暗合的分布，與四化相關的輔星、煞星可選擇安或不安：祿存、羊陀、魁鉞隨天干自動排；左右指定一顆，另一顆自動安上；昌曲、空劫共用一個時辰，指定任一顆，另一組一起移動，不會排出不存在的盤。火鈴和四化無關，不安。安上後會列出四化同宮、被夾、三方四正會照的星。</li>
     <li><b>開發潛能</b>：慧心齋主《紫微斗數開發潛能》的重點：每顆星的精神潛能、物質潛能、幸運色、矯正色與剋星，雙星對照和七個命例。</li>
-    <li><b>生辰排盤</b>：輸入農曆生辰，一步步看命宮、身宮、五行局、紫微怎麼排出來，落在 144 格的哪一格，並安上大限與年月時系的輔煞。可從下拉選單載入書中命例，對照書上的盤。練習裡的「排命宮」「定五行局」「安紫微」三種題型練的就是這幾步。</li>
+    <li><b>生辰排盤</b>：直接輸入陽曆生日與時間（自動換成農曆，1900–2100 年），或切換成農曆生辰輸入；晚子時、閏月的算法可以選。一步步看命宮、身宮、五行局、紫微怎麼排出來，落在 144 格的哪一格，並安上大限與年月時系的輔煞。可從下拉選單載入書中命例，對照書上的盤。練習裡的「排命宮」「定五行局」「安紫微」三種題型練的就是這幾步。</li>
     <li><b>四化日記</b>：選日期、查萬年曆選當天天干，帶出當天四化寫日記。同一天已經寫過會提醒，不會覆蓋；可以補寫之前的日子。</li>
   </ul>
   <h2>第一次使用，請先做這一步</h2>

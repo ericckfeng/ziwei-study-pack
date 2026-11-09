@@ -318,6 +318,40 @@ function parseBirth(str) {
 }
 const birthOf = str => { if (!str) return null; const r = parseBirth(str); return { ...birthChart(r), aux: auxOf(r) }; };
 
+/* ───────── 陽曆轉農曆 ─────────
+   用瀏覽器與 Node 內建的中國曆（Intl／ICU），不必自帶萬年曆表；支援 1900–2100 年。
+   年干支以農曆新年（正月初一）為界，不是立春。 */
+let LUNAR_FMT = null;
+const LUNAR_MIN = "1900-01-31", LUNAR_MAX = "2100-12-31";
+/** 陽曆年月日 → { y 農曆年, g 年干, yb 年支, m 月（1–12）, leap 是否閏月, d 日 }；不支援時回傳 null */
+function solarToLunar(y, m, d) {
+  try { LUNAR_FMT ||= new Intl.DateTimeFormat("en-u-ca-chinese", { year: "numeric", month: "numeric", day: "numeric", timeZone: "UTC" }); } catch { return null; }
+  const p = Object.fromEntries(LUNAR_FMT.formatToParts(new Date(Date.UTC(y, m - 1, d))).map(x => [x.type, x.value]));
+  if (!p.relatedYear || !p.month || !p.day) return null;
+  const ly = +p.relatedYear, n = mod(ly - 4, 60);
+  return { y: ly, g: GAN[n % 10], yb: BR[n % 12], m: parseInt(p.month, 10), leap: /bis/.test(p.month), d: +p.day };
+}
+/** 時刻 → 時辰（子=0）：23:00–00:59 子時，01:00–02:59 丑時…… */
+const MN = "正二三四五六七八九十冬臘";
+const hourBranch = (H, M = 0) => Math.floor(((H + 1) % 24) / 2);
+/** 陽曆生辰 → 排盤用的農曆生辰。
+    lateZi：23 點後的晚子時，"next" 算隔天（預設，通行做法）、"same" 算當天；
+    leapRule：閏月，"same" 依本月（預設，慧心齋主命例如張女士閏七月即依七月排）、"split" 十五日前依本月、十六日起依下月 */
+function solarBirth(date, time = "12:00", { lateZi = "next", leapRule = "same" } = {}) {
+  const [y, mo, d] = date.split("-").map(Number), [H, Mi] = time.split(":").map(Number);
+  if (!(y >= 1900 && y <= 2100) || date < LUNAR_MIN || date > LUNAR_MAX) return { error: `支援 ${LUNAR_MIN} 至 ${LUNAR_MAX}` };
+  const h = hourBranch(H, Mi), notes = [];
+  let day = new Date(Date.UTC(y, mo - 1, d));
+  if (H === 23 && lateZi === "next") { day = new Date(day.getTime() + 864e5); notes.push("23 點後為晚子時，依通行做法算隔天的子時"); }
+  const L = solarToLunar(day.getUTCFullYear(), day.getUTCMonth() + 1, day.getUTCDate());
+  if (!L) return { error: "這個瀏覽器不支援農曆換算，請改用「農曆」輸入" };
+  let m = L.m;
+  if (L.leap) {
+    if (leapRule === "split" && L.d >= 16) { m = L.m % 12 + 1; notes.push(`閏${MN[L.m - 1]}月十六日以後，依下月（${MN[m - 1]}月）排盤`); }
+    else notes.push(`閏${MN[L.m - 1]}月，依本月排盤`);
+  }
+  return { ...L, lm: L.m, m, h, notes };
+}
 /** 書中命例對應到 144 格。三方核對：筆記標註的表號與命宮、生辰排盤、命宮主星。
     以命宮主星為準：生辰排出的命宮主星和書中所列相同，就取生辰的格位（連命宮地支一起更正）；
     否則依主星在標註的命宮地支找表號（可能 0 個或多個）。
@@ -1077,7 +1111,7 @@ function normalizeImportPath(p) {
 const api = { BR, PAL, ORDER, SHORT, TABLES, CELLS, CELL, PATS, PK, BRIDGES, PARTNER, QUIET, SIHUA, STARS, BOOKS, DIV, EDIT, STATUS,
   mod, pad, cellId, twinOf, tname, cname, pfile, shortName, label, PATH,
   HUA, STEMS, HUA_LIST, HUA_NAMES, HUA_TXT, HUA_BOOK, BOOK, CASES, casesOf, caseWhere, cellLabel, birthTxt, DYN, huaPalaceAt,
-  GAN, NAYIN_NAME, JU_NAME, mingAt, shenAt, palaceStem, juOf, ziweiAt, birthChart, auxOf, TIANMA, HUOLING, parseBirth, DATA_FILES, diaryHua, AUX, starShort, auxPartnerAt, auxPositions,
+  GAN, NAYIN_NAME, JU_NAME, solarToLunar, hourBranch, solarBirth, LUNAR_MIN, LUNAR_MAX, mingAt, shenAt, palaceStem, juOf, ziweiAt, birthChart, auxOf, TIANMA, HUOLING, parseBirth, DATA_FILES, diaryHua, AUX, starShort, auxPartnerAt, auxPositions,
   LUCKY, UNLUCKY, PAIRS, pairAt, LUCUN, KUIYUE, stemStars, jiaAt, HOUR_AT, HOUR_OF, relOf, huaPlaces, huaPairs,
   diaryNote, setDiaryStem, setDiaryDate,
   cellNote, tableNote, patNote, starNote, allNotes,

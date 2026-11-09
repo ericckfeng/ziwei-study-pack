@@ -89,6 +89,25 @@ assert.ok(Z.DYN.every(d => d.bc.t === d.t), "動態命例：生辰排盤與原�
 assert.ok(Z.CASES.every(c => c.auxCheck.every(a => a.ok)), "命宮輔煞全部落在命宮");
 { const c = Z.CASES.find(c => c.who === "丙女士"); assert.ok(c.ok && !c.shenBad && c.cells[0] === "0406", "丙女士依原書：表4・命午，身宮戌天同"); }
 for (const [n, t] of Object.entries(Z.BOOK.HUA_PALACE)) assert.ok(Z.HUA_NAMES.includes(n) && t.split("；").every(x => x.length > 2), n + " 十二宮顯像");
+// 陽曆轉農曆：已知日期，以及 1900–2100 逐日連續性（日只會 +1 或回到 1，月只會換到下一個月或閏月）
+{ const L = (d, t) => Z.solarBirth(d, t);
+  let r = L("2026-02-17", "10:30"); assert.deepStrictEqual([r.g + r.yb, r.m, r.d, r.h], ["丙午", 1, 1, 5], "2026 春節");
+  r = L("2026-02-16", "23:10"); assert.deepStrictEqual([r.g + r.yb, r.m, r.d, r.h], ["丙午", 1, 1, 0], "除夕晚子時算隔天");
+  r = Z.solarBirth("2026-02-16", "23:10", { lateZi: "same" }); assert.deepStrictEqual([r.g + r.yb, r.m, r.d], ["乙巳", 12, 29]);
+  r = L("2023-03-22", "08:00"); assert.ok(r.leap && r.m === 2 && r.d === 1, "2023 閏二月");
+  r = L("2033-12-22", "08:00"); assert.ok(r.leap && r.lm === 11, "2033 閏十一月");
+  r = Z.solarBirth("2023-04-10", "08:00", { leapRule: "split" }); assert.ok(r.leap && r.d >= 16 && r.m === 3, "閏月十六日起依下月");
+  assert.deepStrictEqual([0, 1, 2, 22, 23].map(H => Z.hourBranch(H)), [0, 1, 1, 11, 0], "時辰");
+  let prev = Z.solarToLunar(1900, 1, 31), n = 0;
+  for (let t = Date.UTC(1900, 1, 1); t <= Date.UTC(2100, 11, 31); t += 864e5, n++) {
+    const d = new Date(t), c = Z.solarToLunar(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate());
+    if (c.d === 1) assert.ok(prev.d === 29 || prev.d === 30, "月大小：" + d.toISOString());
+    else assert.ok(c.d === prev.d + 1 && c.m === prev.m && c.leap === prev.leap, "日連續：" + d.toISOString());
+    if (c.y !== prev.y) assert.ok(c.m === 1 && c.d === 1 && !c.leap, "新年在正月初一：" + d.toISOString());
+    prev = c;
+  }
+  assert.ok(n > 73000);
+}
 // 資料檔：十干四化（日記用）星名須與四化表一致；命例欄位與生辰格式
 for (const g of Z.STEMS) assert.deepStrictEqual(Z.BOOK.DIARY_HUA[g].map(r => r[0]), Z.SIHUA[g].map((s, i) => s + "化" + Z.HUA[i]), g + "干十干四化");
 for (const c of Z.BOOK.CASES) {

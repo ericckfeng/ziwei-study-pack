@@ -288,7 +288,7 @@ table.dims tbody th small{display:block;font-family:var(--f-body);font-weight:40
 /* 生辰排盤 */
 .bform{flex-wrap:wrap;gap:8px 14px;align-items:center}
 .bform label{font-size:13px;color:var(--ink-2);display:flex;gap:6px;align-items:center}
-.bform select{font:inherit;color:var(--ink);background:var(--sheet);border:1px solid var(--rule);border-radius:3px;padding:3px 6px}
+.bform input,.bform select{font:inherit;color:var(--ink);background:var(--sheet);border:1px solid var(--rule);border-radius:3px;padding:3px 6px}
 .pal .dx{position:absolute;left:50%;transform:translateX(-50%);bottom:3px;font-family:var(--f-mono);font-size:11px;color:var(--ink-2)}
 .pal .stars .hs{color:var(--cinnabar)}
 .steps{padding-left:1.3em;margin:0;font-size:14px;display:grid;gap:8px}
