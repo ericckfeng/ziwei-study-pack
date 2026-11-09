@@ -60,6 +60,7 @@ assert.equal(Z.relOf(6, 7), "暗合・鄰宮"); assert.equal(Z.relOf(2, 6), "三
 assert.deepStrictEqual(Object.keys(Z.HUA_BOOK).sort(), [...Z.HUA_NAMES].sort(), "每一化都有書中要點");
 for (const s of Z.ORDER) {
   assert.ok(Z.BOOK.POT[s] && Z.BOOK.HUA_STAR[s], s + " 有潛能與四化總評");
+  for (const f of ["mind", "body", "lucky", "fix", "kMind", "kBody", "core", "tMind", "tBody", "jobs"]) assert.ok(Z.BOOK.POT[s][f], `${s} 潛能檔案缺 ${f}`);
   const no = Z.BOOK.HUA_STAR[s].no, banned = no === "全無四化" ? "祿權科忌" : [...no.matchAll(/不化([祿權科忌])/g)].map(m => m[1]).join("");
   for (const h of banned) assert.ok(!Z.HUA_LIST.some(x => x.star === s && Z.HUA[x.i] === h), `${s}不化${h}，但四化表有`);
 }

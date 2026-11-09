@@ -569,7 +569,7 @@ function renderPotential() {
   <h3 class="sec">諸星潛能一覽（十四主星＋祿存、天馬）</h3>
   <div class="ovw"><table class="hm dims pt2"><thead><tr><th scope="col">星</th>${POT_KV.map(([k]) => `<th scope="col">${k}</th>`).join("")}</tr></thead>
     <tbody>${POT_STARS.map(s => `<tr><th scope="row">${s}<small>${P[s].alias}</small></th>${POT_KV.map(([, f]) => `<td>${P[s][f]}${potAlt(s, f)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
-  <p class="note-src">「另一份筆記」：《紫微斗數與四化星》研讀指南的說法和《開發潛能》研讀筆記不同（目前只有天梁的顏色與剋星；精神潛能「蔭」、物質潛能「事半功倍」已由原書確認），請對照原書。</p>
+  ${Object.keys(BOOK.POT_ALT).length ? `<p class="note-src">「另一份筆記」：其他研讀筆記的說法和《開發潛能》研讀筆記不同（${Object.keys(BOOK.POT_ALT).join("、")}），請對照原書。</p>` : ""}
   <h3 class="sec">雙星對照：精神、物質潛能相近還是相反？</h3>
   <div class="picker"><label>第一顆</label>${pick("a", potA)}<label>第二顆</label>${pick("b", potB)}</div>
   <div class="cards">${[potA, potB].map(s => `<article class="card star"><div class="meta">${P[s].alias}</div><h2>${s}</h2>${potKV(s)}${potMore(s)}</article>`).join("")}</div>
