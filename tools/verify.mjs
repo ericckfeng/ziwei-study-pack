@@ -82,6 +82,8 @@ assert.deepStrictEqual([bc.daxian[1].gz, bc.daxian[1].from], ["乙未", 16]);
 assert.equal(Z.CASES.filter(c => c.bFit).length, 37, "生辰排出的命宮主星與書中相同");
 assert.deepStrictEqual(Z.CASES.filter(c => c.bc && !c.bFit).map(c => c.who).sort(), ["戚女士", "柏女士", "褚女士"].sort(), "只剩原書自身排盤有誤的三例");
 assert.ok(Z.CASES.filter(c => c.bc && !c.bFit).every(c => c.verified && c.ok), "原書排盤有誤的命例都已對照原書");
+assert.ok(Z.CASES.filter(c => c.src === "hua").every(c => c.verified), "四化星 40 例都已對照原書命盤");
+assert.ok(Z.CASES.filter(c => c.src === "hua").every(c => c.ok), "四化星 40 例：表號與命宮都與原書相同");
 assert.ok(Z.DYN.every(d => d.bc.t === d.t), "動態命例：生辰排盤與原書命盤相同");
 assert.ok(Z.CASES.every(c => c.auxCheck.every(a => a.ok)), "命宮輔煞全部落在命宮");
 { const c = Z.CASES.find(c => c.who === "丙女士"); assert.ok(c.ok && !c.shenBad && c.cells[0] === "0406", "丙女士依原書：表4・命午，身宮戌天同"); }

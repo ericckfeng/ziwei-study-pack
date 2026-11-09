@@ -644,8 +644,7 @@ function levelsHTML(name) {
 let caseStem = "all";
 function huaBookHTML() {
   const B = BOOK, list = CASES.filter(c => c.src === "hua" && (caseStem === "all" || c.g === caseStem));
-  const fixed = CASES.filter(c => c.src === "hua" && !c.ok).length;
-  return `<div class="prose wide">
+    return `<div class="prose wide">
     <h2>四化的本質</h2>
     <dl class="kv bk">${B.HUA_INTRO.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>
     <h2>推命四步：每一化的四個層次</h2>
@@ -670,7 +669,7 @@ function huaBookHTML() {
     <h2>研習心法</h2>
     <ul>${B.HUA_END.map(x => `<li>${x}</li>`).join("")}</ul>
     <h2>四十個命例</h2>
-    <p class="note-src">每個命例都三方核對：筆記標的表號與命宮、依生辰排盤（命宮、五行局、紫微）、命宮主星。以命宮主星為準：生辰排出的命宮主星和書中相同，就依生辰定格（連命宮地支一起更正）；生辰不合時依主星定表號，並標「生辰待查」。命宮的輔星、煞星只靠生年、月、時安星，用來檢驗這三項是否抄對。共 ${fixed} 例已更正，點格名就能看盤。</p>
+    <p class="note-src">四十個命例的表號、命宮、生辰都已逐張對照原書命盤（標示頁碼），研讀筆記抄錯之處寫在各例的「校勘」。程式另依生辰排盤（命宮、五行局、紫微）並核對命宮輔煞：${CASES.filter(c => c.src === "hua" && c.bFit).length} 例與原書命盤完全一致；褚女士、戚女士、柏女士三例是原書的五行局與命宮納音不合，以原書命盤為準。點格名就能看盤。</p>
     <div class="chips" role="group" aria-label="年干" style="margin-bottom:10px"><button class="chip" data-cs="all" aria-pressed="${caseStem === "all"}">全部</button>${STEMS.map(g => `<button class="chip" data-cs="${g}" aria-pressed="${caseStem === g}">${g}<span class="s">${SIHUA[g].map(Z.starShort).join("")}</span></button>`).join("")}</div>
     <div class="cases">${list.map(c => caseHTML(c)).join("")}</div>
   </div>`;
