@@ -347,7 +347,7 @@ function caseWhere(c) {
   const lab = `筆記標表${c.t}・命${c.br}`, bc = c.bc;
   const bTxt = bc ? `生辰（${birthTxt(c)}）排出${cellLabel(bc.cell)}、${JU_NAME[bc.ju]}` : "";
   const sb = c.shenBad ? `；但身宮${c.shen.br}在此表為${c.shen.got.join("・") || "空宮"}，與書中不合，待查原書` : "";
-  if (c.v === "ok") return `表${c.t}・命${c.br}` + (bc && !c.bFit ? `；${bTxt}，命宮主星不合，生辰待查` : "") + sb;
+  if (c.v === "ok") return `表${c.t}・命${c.br}` + (bc && !c.bFit ? (c.verified ? `（已對照原書 ${c.verified} 命盤）；${bTxt}，與原書命盤不合，原書排盤有誤，見校勘` : `；${bTxt}，命宮主星不合，生辰待查`) : "") + sb;
   if (c.v === "birth") return `${lab}；${bTxt}，命宮主星與書中相符，應為${cellLabel(c.cells[0])}`;
   if (c.v === "star") return `${lab}；依命宮主星應為${c.tabs.map(x => `表${x}`).join("或")}・命${c.br}` + (bc ? `；${bTxt}，主星不合，待查原書` : "") + sb;
   return `${lab}，十二表中沒有這個命宮組合` + (bc ? `；${bTxt}，主星也不合` : "") + "，請對照原書";

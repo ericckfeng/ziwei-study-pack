@@ -23,7 +23,7 @@ const POT_STARS = Object.keys(BOOK.POT);
 const caseChips = c => c.cells.map(id => `<button class="chip" data-go="${id}">${label(CELL[id])}</button>`).join("");
 const CASE_FLAG = { birth: "已依生辰排盤更正：", star: "表號已依主星更正：", none: "⚠ " };
 const caseFlag = c => c.ok && !(c.bc && !c.bFit) && !c.shenBad ? "" : `<div class="cflag">${c.ok ? "⚠ " : CASE_FLAG[c.v]}${esc(Z.caseWhere(c))}</div>`;
-const caseBirth = c => (c.note ? `<div class="note-src">校勘：${esc(c.note)}</div>` : "") + (c.bc ? `<div class="note-src">生辰 ${Z.birthTxt(c)}・${Z.JU_NAME[c.bc.ju]}${c.auxCheck.length ? `　輔煞核對 ${c.auxCheck.map(a => a.s + (a.ok ? "✓" : "✗")).join(" ")}` : ""}</div>` : "");
+const caseBirth = c => (c.note ? `<div class="note-src">校勘${c.verified ? `（已對照原書 ${c.verified}）` : ""}：${esc(c.note)}</div>` : "") + (c.bc ? `<div class="note-src">生辰 ${Z.birthTxt(c)}・${Z.JU_NAME[c.bc.ju]}${c.auxCheck.length ? `　輔煞核對 ${c.auxCheck.map(a => a.s + (a.ok ? "✓" : "✗")).join(" ")}` : ""}</div>` : "");
 function caseHTML(c, { links = true } = {}) {
   const head = c.src === "hua" ? `<b>${c.g}年・${c.who}</b>` : `<b>${c.who}</b><span class="kd">${c.kind}</span>`;
   const body = c.src === "hua" ? `<p>${c.txt}</p>` : `<p><span class="kd">${c.other}</span><br>${c.story}</p><p><b class="fix">解方</b>${c.fix}</p>`;
@@ -681,7 +681,7 @@ function dynHTML(d) {
   return `<div class="case"><b>${d.who}</b><span class="kd">${d.layer}</span>　<span class="cfg">${d.birth}・${d.sex === "男" ? (bc.yang ? "陽男" : "陰男") : (bc.yang ? "陽女" : "陰女")}</span>
     <p>${esc(d.cfg)}</p><ol>${d.steps.map(x => `<li>${esc(x)}</li>`).join("")}</ol>
     <div class="note-src">排盤：${Z.cellLabel(id)}、${Z.JU_NAME[bc.ju]}、身宮${BR[bc.shen]}（${bc.shenPal}）。大限（${bc.dir > 0 ? "順" : "逆"}行）：${dx}</div>
-    ${bc.t !== d.t ? `<div class="cflag">筆記標表${d.t}，依生辰排盤為表${bc.t}，請對照原書</div>` : ""}
+    ${bc.t !== d.t ? `<div class="cflag">標表${d.t}，依生辰排盤為表${bc.t}，請對照原書</div>` : d.verified ? `<div class="note-src">已對照原書 ${d.verified} 命盤</div>` : ""}
     <div class="links"><button class="chip" data-go="${id}">${label(CELL[id])}</button><button class="chip" data-bload="${d.who}">排盤</button></div></div>`;
 }
 function huaTableHTML() {

@@ -79,7 +79,10 @@ let bc = Z.birthChart({ g: "庚", m: 3, d: 5, h: 1, sex: "男" });   // 魏先�
 assert.deepStrictEqual([bc.t, Z.BR[bc.ming], bc.ju], [3, "卯", 5], "魏先生：表3・命卯・土五局");
 bc = Z.birthChart({ g: "辛", m: 10, d: 27, h: 3, sex: "男" });   // 潘先生：書中乙未大限 16–25
 assert.deepStrictEqual([bc.daxian[1].gz, bc.daxian[1].from], ["乙未", 16]);
-assert.equal(Z.CASES.filter(c => c.bFit).length, 33, "生辰排出的命宮主星與書中相同");
+assert.equal(Z.CASES.filter(c => c.bFit).length, 37, "生辰排出的命宮主星與書中相同");
+assert.deepStrictEqual(Z.CASES.filter(c => c.bc && !c.bFit).map(c => c.who).sort(), ["戚女士", "柏女士", "褚女士"].sort(), "只剩原書自身排盤有誤的三例");
+assert.ok(Z.CASES.filter(c => c.bc && !c.bFit).every(c => c.verified && c.ok), "原書排盤有誤的命例都已對照原書");
+assert.ok(Z.DYN.every(d => d.bc.t === d.t), "動態命例：生辰排盤與原書命盤相同");
 assert.ok(Z.CASES.every(c => c.auxCheck.every(a => a.ok)), "命宮輔煞全部落在命宮");
 { const c = Z.CASES.find(c => c.who === "丙女士"); assert.ok(c.ok && !c.shenBad && c.cells[0] === "0406", "丙女士依原書：表4・命午，身宮戌天同"); }
 for (const [n, t] of Object.entries(Z.BOOK.HUA_PALACE)) assert.ok(Z.HUA_NAMES.includes(n) && t.split("；").every(x => x.length > 2), n + " 十二宮顯像");
