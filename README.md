@@ -19,7 +19,7 @@ npm run deploy     # build 並複製網站版到 ../ericckfeng.github.io/ziwei-s
 - `src/config.js`：學員可手改的設定（筆記資料夾名稱、命盤產生器位置），會原樣複製到研習包。
 - `tools/verify.mjs`：和原研習頁的資料（`tools/reference-data.json`，由 gen2.py 產生）逐格比對，並測段落合併與 zip。
 - `tools/build.mjs`：輸出研習包；萬用命盤產生器取自 `../ziwei-astrology-tool/index.html`。
-- `tools/workbook.mjs`：PDF 練習簿（A4，190 頁）：封面、說明、進度表、十四主星、每表 14 頁（總覽、12 格、默寫測驗）、格局總表。頁面都固定一頁，所以鏡像格、格局位置能標頁碼；字型用 macOS 的蘋方與宋體。
+- `tools/workbook.mjs`：PDF 練習簿（A4，213 頁）：封面、說明、進度表、十四主星、每表 14 頁（總覽、12 格、默寫測驗）、四化學習（十干四化表、十干各一頁、輔星安星對照）、四化日記（寫法說明與甲日到癸日十個範本）、格局總表。頁面都固定一頁，所以鏡像格、格局位置能標頁碼；字型用 macOS 的蘋方與宋體。
 
 ## 筆記怎麼存
 - Chrome／Edge：學員選一次「筆記」資料夾，之後直接讀寫 .md 檔（File System Access API）。資料夾授權存在 IndexedDB，每次重開瀏覽器按一次「繼續」。
@@ -29,7 +29,7 @@ npm run deploy     # build 並複製網站版到 ../ericckfeng.github.io/ziwei-s
 
 ## 四化
 - `core.js` 的 `SIHUA`（四化表）、`HUA_TXT`（39 則通行說法，非原書文字）、`HUA_BOOK`（《紫微四化星》要點，待補）。
-- 四化入表：`huaPlaces`、`huaPairs`、`relOf`。輔星由學員指定一顆，`auxPartnerAt` 安另一顆（左右、昌曲支序和恆 ≡ 2）。
+- 四化入表：`huaPlaces`、`huaPairs`、`relOf`。輔星、煞星：`stemStars` 依天干安祿存、羊陀、魁鉞；`auxPositions` 依學員指定安左右（支序和 ≡ 2）；昌曲、空劫共用時辰，由 `HOUR_AT`／`HOUR_OF` 互推；`jiaAt` 判斷夾宮。火鈴需年支與男女，和四化無關，不安。
 - 筆記：`四化/十干四化.md`、`四化/我的四化星性.md`（每化一段），日記存在 `四化日記/YYYY-MM-DD.md`，一天一篇，天干由學員查萬年曆自選。
 
 ## 修改格局定義

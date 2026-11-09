@@ -252,3 +252,14 @@ table.hm tfoot td,table.hm tfoot th{font-size:12px;background:var(--paper);font-
 .ditem[aria-pressed="true"]{border-color:var(--ink);background:var(--sheet)}
 input[type=date]{font:inherit;color:var(--ink);background:var(--paper);border:1px solid var(--rule);border-radius:4px;padding:6px 8px}
 .linkbtn{border:0;background:none;color:var(--indigo);cursor:pointer;padding:0;font-family:var(--f-display);font-weight:700;font-size:15px;text-decoration:underline}
+.pal .stars .sha,.hrow .sha{font-weight:500;color:var(--cinnabar);font-size:14px}
+.pal .stars .lu,.hrow .lu{font-weight:500;color:var(--gold);font-size:14px}
+.hrow .aux,.legend span.aux{color:var(--indigo)}
+.legend span.sha{color:var(--cinnabar)}
+.legend span.lu{color:var(--gold)}
+details.sixstars{border:1px solid var(--rule);padding:8px 12px;margin-bottom:12px;background:var(--sheet)}
+details.sixstars summary{cursor:pointer;font-weight:600;font-size:14px}
+details.sixstars .picker{margin:10px 0 4px}
+details.sixstars .warn{margin:8px 0 0;padding:6px 10px;font-size:13px;color:var(--cinnabar);background:var(--cinnabar-soft)}
+details.sixstars .picker .chips+.chips{margin-top:4px}
+.chip[disabled]{opacity:.4;cursor:not-allowed}

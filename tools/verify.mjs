@@ -33,6 +33,22 @@ for (let mo = 0; mo < 12; mo++) for (const [a, start, dir] of [["左輔", 4, 1],
   assert.equal(Z.auxPositions({ [Z.AUX[a]]: partner })[a], b);
 }
 assert.deepStrictEqual([...Array(12).keys()].filter(b => Z.auxPartnerAt(b) === b), [1, 7], "只有丑未同宮");
+// 六吉六煞：地劫亥起子時順、地空亥起子時逆；祿存、羊陀、魁鉞隨天干
+for (let h = 0; h < 12; h++) assert.strictEqual(Z.pairAt("地劫", (11 + h) % 12), (11 - h + 12) % 12, "空劫對稱");
+assert.deepStrictEqual([...Array(12).keys()].filter(b => Z.pairAt("地空", b) === b), [5, 11], "只有巳亥同宮");
+assert.deepStrictEqual(Z.STEMS.map(g => Z.BR[Z.LUCUN[g]]).join(""), "寅卯巳午巳午申酉亥子", "祿存");
+assert.deepStrictEqual(Z.STEMS.map(g => Z.KUIYUE[g].map(b => Z.BR[b]).join("")).join(" "), "丑未 子申 亥酉 亥酉 丑未 子申 丑未 午寅 卯巳 卯巳", "魁鉞");
+for (const g of Z.STEMS) { const at = Z.stemStars(g, { 祿存: 1, 羊陀: 1 }); assert.deepStrictEqual(Z.jiaAt(at, at.祿存), ["擎羊陀羅"], g + " 羊陀夾祿存"); }
+assert.deepStrictEqual(Z.stemStars("甲", {}), {}, "不安");
+assert.deepStrictEqual(Z.auxPositions({ 地劫: 0 }), { 地劫: 0, 地空: 10 }, "空劫成對");
+// 時辰星：與成對規則一致、可反推時辰
+for (let h = 0; h < 12; h++) {
+  for (const [x, y] of [["文昌", "文曲"], ["地劫", "地空"]]) {
+    assert.strictEqual(Z.pairAt(x, Z.HOUR_AT[x](h)), Z.HOUR_AT[y](h), x + y + " 成對");
+    for (const s of [x, y]) assert.strictEqual(Z.HOUR_OF[s](Z.HOUR_AT[s](h)), h, s + " 反推時辰");
+  }
+}
+assert.deepStrictEqual([Z.BR[Z.HOUR_AT.文昌(0)], Z.BR[Z.HOUR_AT.文曲(0)], Z.BR[Z.HOUR_AT.地劫(1)], Z.BR[Z.HOUR_AT.地空(1)]], ["戌", "辰", "子", "戌"], "子時昌曲、丑時空劫");
 const rels = g => Z.huaPairs(g).map(x => x.rels && [...new Set(x.rels)].join("/"));
 assert.equal(rels("甲")[1], "三合", "甲：廉祿武科恆三合");
 assert.equal(rels("庚")[4].split("/").every(r => r.startsWith("暗合")), true, "庚：武權陰忌恆暗合");

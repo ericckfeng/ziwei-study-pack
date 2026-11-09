@@ -256,11 +256,40 @@ function relOf(a, b) {
   if (mod(a + b) === 1) return adj ? "暗合・鄰宮" : "暗合";
   return adj ? "鄰宮" : "其他";
 }
-/** aux：{左輔: 支序, 文昌: 支序}，自動補上成對的另一顆 */
+/* 六吉六煞與祿存 */
+const LUCKY = ["左輔", "右弼", "文昌", "文曲", "天魁", "天鉞"];
+const UNLUCKY = ["擎羊", "陀羅", "火星", "鈴星", "地空", "地劫"];
+// 由人指定位置的成對星：兩星支序和為定值。地劫亥起子時順行、地空亥起子時逆行，和恆 ≡ 10，以巳亥為軸對稱
+const PAIRS = { "左輔": "右弼", "右弼": "左輔", "文昌": "文曲", "文曲": "文昌", "地空": "地劫", "地劫": "地空" };
+const PAIR_SUM = { "左輔": 2, "右弼": 2, "文昌": 2, "文曲": 2, "地空": 10, "地劫": 10 };
+const pairAt = (s, b) => mod(PAIR_SUM[s] - b);
+// 時辰（子=0）安星：文昌戌起子時逆行、文曲辰起子時順行、地劫亥起子時順行、地空亥起子時逆行
+const HOUR_AT = { 文昌: h => mod(10 - h), 文曲: h => mod(4 + h), 地劫: h => mod(11 + h), 地空: h => mod(11 - h) };
+const HOUR_OF = { 文昌: b => mod(10 - b), 文曲: b => mod(b - 4), 地劫: b => mod(b - 11), 地空: b => mod(11 - b) };
+// 隨天干自動安：祿存；擎羊在祿存前一宮、陀羅在後一宮
+const LUCUN = { 甲: 2, 乙: 3, 丙: 5, 丁: 6, 戊: 5, 己: 6, 庚: 8, 辛: 9, 壬: 11, 癸: 0 };
+// 天魁天鉞：甲戊庚牛羊，乙己鼠猴鄉，丙丁豬雞位，壬癸兔蛇藏，六辛逢馬虎
+const KUIYUE = { 甲: [1, 7], 戊: [1, 7], 庚: [1, 7], 乙: [0, 8], 己: [0, 8], 丙: [11, 9], 丁: [11, 9], 壬: [3, 5], 癸: [3, 5], 辛: [6, 2] };
+/** 隨天干的星：on = {祿存, 羊陀, 魁鉞} 哪幾組要安 */
+function stemStars(g, on = {}) {
+  const o = {}, L = LUCUN[g];
+  if (on.祿存) o.祿存 = L;
+  if (on.羊陀) { o.擎羊 = mod(L + 1); o.陀羅 = mod(L - 1); }
+  if (on.魁鉞) [o.天魁, o.天鉞] = KUIYUE[g];
+  return o;
+}
+/** aux：{左輔: 支序, 文昌: 支序, 地空: 支序}，自動補上成對的另一顆 */
 function auxPositions(aux = {}) {
   const o = {};
-  for (const [s, b] of Object.entries(aux)) if (AUX[s] && b != null) { o[s] = b; o[AUX[s]] = auxPartnerAt(b); }
+  for (const [s, b] of Object.entries(aux)) if (PAIRS[s] && b != null) { o[s] = b; o[PAIRS[s]] = pairAt(s, b); }
   return o;
+}
+// 夾宮的成對星
+const JIA_PAIRS = [["擎羊", "陀羅"], ["左輔", "右弼"], ["文昌", "文曲"], ["天魁", "天鉞"], ["地空", "地劫"]];
+/** at：{星: 支序}；回傳夾住 b 宮的星對，如 ["擎羊陀羅"] */
+function jiaAt(at, b) {
+  const L = mod(b - 1), R = mod(b + 1);
+  return JIA_PAIRS.filter(([x, y]) => (at[x] === L && at[y] === R) || (at[x] === R && at[y] === L)).map(([x, y]) => x + y);
 }
 /** 某表某干的四化落在哪一支；輔星未指定位置時 b 為 null */
 function huaPlaces(t, g, aux = {}) {
@@ -698,11 +727,11 @@ tags: [紫微144格]
 
 ## 四化學習與四化日記
 - **四化星性**：點十干四化表裡的任一化，看通行說法，在下方寫自己的星性筆記（存在 \`四化/我的四化星性.md\`）。
-- **四化入表**：選天干與表號，看祿權科忌落在哪一宮、彼此是同宮、三合、對宮還是暗合。左輔／右弼、文昌／文曲只要指定一顆的位置，另一顆自動安上。
+- **四化入表**：選天干與表號，看祿權科忌落在哪一宮、彼此是同宮、三合、對宮還是暗合。與四化相關的輔星、煞星可依需要安上：祿存、擎羊陀羅、天魁天鉞隨天干自動排；左輔右弼指定一顆，另一顆自動安上；文昌文曲、地空地劫共用一個時辰，指定任一顆或直接選時辰，其他一起排好。火星、鈴星需年支與男女，和四化無關，不安。
 - **四化日記**：選日期，再查萬年曆的日干支、選當天的天干（例如丁亥日選丁），就會帶出當天四化。每天一篇，存在 \`四化日記/\` 資料夾；同一天已經寫過時會提醒，不會覆蓋。可以補寫之前的日子。
 
 ## 喜歡手寫
-研習包裡的 \`紫微144格練習簿.pdf\`（A4，190 頁）每格一頁，附手寫欄和每張表的默寫測驗，印出來搭配書讀。
+研習包裡的 \`紫微144格練習簿.pdf\`（A4，213 頁）每格一頁，附手寫欄和每張表的默寫測驗；後面有四化學習章（十干各一頁）與甲日到癸日十個四化日記範本，印出來搭配書讀。
 
 ## 隱私
 筆記只存在你自己的電腦或瀏覽器裡，不會上傳到任何地方。
@@ -739,6 +768,10 @@ ${rows}
 
 ## 輔星的位置
 左輔、右弼由出生月決定（左輔辰起正月順行，右弼戌起正月逆行）；文昌、文曲由出生時辰決定（文曲辰起子時順行，文昌戌起子時逆行）。所以兩星的支序和恆為 2（mod 12），以丑未為軸左右對稱：知道一顆，就知道另一顆；只有在丑、未才會同宮。
+
+地劫亥起子時順行、地空亥起子時逆行，兩星支序和恆為 10，以巳亥為軸對稱，只有在巳、亥同宮。昌曲與空劫同由時辰決定，知道一組就知道另一組。火星、鈴星要看年支與男女，和四化無關，這裡不安。
+
+祿存隨天干（甲寅、乙卯、丙戊巳、丁己午、庚申、辛酉、壬亥、癸子），擎羊在祿存前一宮、陀羅在後一宮，永遠夾著祿存。天魁天鉞依「甲戊庚牛羊，乙己鼠猴鄉，丙丁豬雞位，壬癸兔蛇藏，六辛逢馬虎」，各派略有出入。
 
 ## 通行說法
 以下是入門提要，不是《紫微四化星》原文；書中要點請對照原書，用自己的話寫進 [[我的四化星性]]。
@@ -918,7 +951,8 @@ function normalizeImportPath(p) {
 
 const api = { BR, PAL, ORDER, SHORT, TABLES, CELLS, CELL, PATS, PK, BRIDGES, PARTNER, QUIET, SIHUA, STARS, BOOKS, DIV, EDIT, STATUS,
   mod, pad, cellId, twinOf, tname, cname, pfile, shortName, label, PATH,
-  HUA, STEMS, HUA_LIST, HUA_NAMES, HUA_TXT, HUA_BOOK, AUX, starShort, auxPartnerAt, auxPositions, relOf, huaPlaces, huaPairs,
+  HUA, STEMS, HUA_LIST, HUA_NAMES, HUA_TXT, HUA_BOOK, AUX, starShort, auxPartnerAt, auxPositions,
+  LUCKY, UNLUCKY, PAIRS, pairAt, LUCUN, KUIYUE, stemStars, jiaAt, HOUR_AT, HOUR_OF, relOf, huaPlaces, huaPairs,
   diaryNote, setDiaryStem, setDiaryDate,
   cellNote, tableNote, patNote, starNote, allNotes,
   getFront, setFront, getSection, setSection, sectionsOf, mergeNote, makeZip, readZip, normalizeImportPath };

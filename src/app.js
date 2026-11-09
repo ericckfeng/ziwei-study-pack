@@ -523,8 +523,23 @@ const HCLS = ["hl", "hq", "hk", "hj"];   // 祿權科忌
 const badge = i => `<b class="hb ${HCLS[i]}" title="化${HUA[i]}">${HUA[i]}</b>`;
 const REL_CLS = { "同宮": "r0", "三合": "r1", "對宮": "r2", "暗合": "r3", "暗合・鄰宮": "r3", "鄰宮": "r4" };
 let huaMode = "nature", huaSel = "甲0", huaG = "甲", huaT = 1;
-const huaAux = { 左右: { who: "左輔", b: null }, 昌曲: { who: "文昌", b: null } };
-const auxArg = () => Object.fromEntries(Object.values(huaAux).filter(a => a.b != null).map(a => [a.who, a.b]));
+const huaAux = { 左右: { who: "左輔", b: null } };   // 左右由出生月，獨立指定
+const huaStemOn = { 祿存: false, 羊陀: false, 魁鉞: false };
+// 昌曲、空劫共用一個時辰，位置一律由時辰推出，不會排出矛盾的盤（火鈴需年支與男女，和四化無關，不安）
+let huaHour = null, sixOpen = false;
+const huaOn = { 昌曲: false, 空劫: false };
+const huaWho = { 昌曲: "文昌", 空劫: "地劫" };
+const WHO_SWAP = { 文昌: "文曲", 文曲: "文昌", 地劫: "地空", 地空: "地劫" };
+function hourStars() {
+  const o = {}, h = huaHour;
+  if (h == null) return o;
+  if (huaOn.昌曲) { o.文昌 = Z.HOUR_AT.文昌(h); o.文曲 = Z.HOUR_AT.文曲(h); }
+  if (huaOn.空劫) { o.地劫 = Z.HOUR_AT.地劫(h); o.地空 = Z.HOUR_AT.地空(h); }
+  return o;
+}
+const auxArg = () => { const a = huaAux.左右, o = a.b == null ? {} : { [a.who]: a.b }, hs = hourStars(); if (hs.文昌 != null) o.文昌 = hs.文昌; return o; };
+const AUX_LABEL = { 左右: "左輔右弼", 昌曲: "文昌文曲", 空劫: "地空地劫" };
+const starCls = s => s === "祿存" ? "lu" : Z.UNLUCKY.includes(s) ? "sha" : "aux";
 
 function renderSihua() {
   const modes = [["nature", "四化星性"], ["table", "四化入表"]];
@@ -554,16 +569,32 @@ function huaNatureHTML() {
 }
 
 function huaTableHTML() {
-  const aux = auxArg(), at = Z.auxPositions(aux), places = Z.huaPlaces(huaT, huaG, aux), P = TABLES[huaT - 1];
+  const aux = auxArg(), at = { ...Z.stemStars(huaG, huaStemOn), ...Z.auxPositions(aux), ...hourStars() }, places = Z.huaPlaces(huaT, huaG, aux), P = TABLES[huaT - 1];
   const pairs = Z.huaPairs(huaG, aux), star = i => places[i].star;
   const auxRow = key => {
-    const a = huaAux[key], p = a.b == null ? null : Z.auxPartnerAt(a.b);
-    return `<label>${key === "左右" ? "左輔右弼" : "文昌文曲"}</label><div><div class="chips">
+    const a = huaAux[key], pair = Z.PAIRS[a.who], p = a.b == null || !pair ? null : Z.pairAt(a.who, a.b);
+    return `<label>${AUX_LABEL[key]}</label><div><div class="chips">
       <button class="chip" data-aw="${key}" title="改成指定另一顆">指定${a.who} ⇄</button>
       <button class="chip" data-ab="${key}:" aria-pressed="${a.b == null}">不安</button>
       ${[...BR].map((b, k) => `<button class="chip" data-ab="${key}:${k}" aria-pressed="${a.b === k}">${b}</button>`).join("")}</div>
-      ${a.b != null ? `<div class="note-src">${a.who}在${BR[a.b]} → ${AUX[a.who]}在${BR[p]}${a.b === p ? "（只有丑、未會同宮）" : ""}</div>` : ""}</div>`;
+      ${a.b != null ? `<div class="note-src">${a.who}在${BR[a.b]} → ${pair}在${BR[p]}${a.b === p ? "（只有丑、未會同宮）" : ""}</div>` : ""}</div>`;
   };
+  const H = huaHour, hTxt = H == null ? "" : BR[H] + "時";
+  const posChips = (key, pos, ok = true) => [...BR].map((b, k) => `<button class="chip" data-hp="${key}:${k}" aria-pressed="${huaOn[key] && pos === k}" ${ok ? "" : "disabled"}>${b}</button>`).join("");
+  const hourRow = key => {   // 昌曲、空劫
+    const who = huaWho[key], other = WHO_SWAP[who], pos = H == null ? null : Z.HOUR_AT[who](H), op = H == null ? null : Z.HOUR_AT[other](H);
+    const msg = H == null ? (huaOn[key] ? "請指定位置或時辰" : "")
+      : `${hTxt}：${who}在${BR[pos]}、${other}在${BR[op]}${pos === op ? `（只有${key === "空劫" ? "巳、亥" : "丑、未"}會同宮）` : ""}${huaOn[key] ? "" : "（未安）"}`;
+    return `<label>${AUX_LABEL[key]}</label><div><div class="chips">
+      <button class="chip" data-hw="${key}" title="改成指定另一顆">指定${who} ⇄</button>
+      <button class="chip" data-hon="${key}" aria-pressed="${!huaOn[key]}">不安</button>${posChips(key, pos)}</div>
+      ${msg ? `<div class="note-src">${msg}</div>` : ""}</div>`;
+  };
+  const hourSel = `<label>時辰</label><div><div class="chips"><button class="chip" data-hh="" aria-pressed="${H == null}">未定</button>${[...BR].map((b, k) => `<button class="chip" data-hh="${k}" aria-pressed="${H === k}">${b}</button>`).join("")}</div>
+      <div class="note-src">昌曲、空劫都由時辰決定，共用這一個時辰。在任一組指定位置，時辰就跟著定，另一組一起移動，不會排出不存在的盤。</div></div>`;
+  const L = Z.LUCUN[huaG], KY = Z.KUIYUE[huaG];
+  const stemOpts = [["祿存", `祿存${BR[L]}`], ["羊陀", `擎羊${BR[(L + 1) % 12]}・陀羅${BR[(L + 11) % 12]}`], ["魁鉞", `天魁${BR[KY[0]]}・天鉞${BR[KY[1]]}`]];
+  const stemRow = `<label>隨${huaG}干</label><div class="chips">${stemOpts.map(([k, t]) => `<button class="chip" data-son="${k}" aria-pressed="${huaStemOn[k]}">${huaStemOn[k] ? "安" : "不安"}<span class="s">${t}</span></button>`).join("")}</div>`;
   const hz = s => { const p = places.find(x => x.star === s); return p ? badge(p.i) : ""; };
   let h = "";
   for (let r = 0; r < 4; r++) for (let k = 0; k < 4; k++) {
@@ -575,26 +606,34 @@ function huaTableHTML() {
     }
     const auxHere = Object.keys(at).filter(s => at[s] === b);
     const st = (P[b].length ? P[b].map(s => `<span>${s}${hz(s)}</span>`).join("") : `<span class="borrow">（${starsTxt(P[(b + 6) % 12])}）</span>`)
-      + auxHere.map(s => `<span class="aux">${s}${hz(s)}</span>`).join("");
+      + auxHere.map(s => `<span class="${starCls(s)}">${s}${hz(s)}</span>`).join("");
     h += `<div class="pal ${places.some(p => p.b === b) ? "hon" : ""}" aria-label="${BR[b]}宮 ${[...P[b], ...auxHere].join(" ") || "空宮"}"><div class="stars">${st}</div><span class="br">${BR[b]}</span></div>`;
   }
   const co = p => [...P[p.b], ...Object.keys(at).filter(s => at[s] === p.b)].filter(s => s !== p.star);
-  const fall = places.map(p => `<div class="hrow">${badge(p.i)} <b>${p.name}</b>　${p.b == null ? `<span class="empty">輔星未安</span>` : `${BR[p.b]}宮${co(p).length ? "，同宮 " + co(p).join("・") : ""}`}</div>`).join("");
+  const meet = b => [4, 8, 6].flatMap(d => Object.keys(at).filter(s => at[s] === (b + d) % 12));
+  const fall = places.map(p => {
+    if (p.b == null) return `<div class="hrow">${badge(p.i)} <b>${p.name}</b>　<span class="empty">輔星未安</span></div>`;
+    const j = Z.jiaAt(at, p.b), m = meet(p.b);
+    return `<div class="hrow">${badge(p.i)} <b>${p.name}</b>　${BR[p.b]}宮${co(p).length ? "，同宮 " + co(p).join("・") : ""}${j.length ? `，<b>${j.join("、")}夾</b>` : ""}${m.length ? `<div class="note-src">三方四正會 ${m.map(s => `<span class="${starCls(s)}">${s}</span>`).join("・")}</div>` : ""}</div>`;
+  }).join("");
   const rel = (x, k) => x.rels ? `<span class="rel ${REL_CLS[x.rels[k]] || ""}">${x.rels[k]}</span>` : `<span class="empty">需先安輔星</span>`;
   const now = pairs.map(x => `<div class="hrow">${badge(x.i)}${star(x.i)}—${badge(x.j)}${star(x.j)}：${rel(x, huaT - 1)}</div>`).join("");
   const sum = x => { if (!x.rels) return "需安輔星"; const c = {}; x.rels.forEach(r => c[r] = (c[r] || 0) + 1); const ks = Object.keys(c); return ks.length === 1 ? `<b>十二表恆為${ks[0]}</b>` : ks.map(r => r + c[r]).join("・"); };
   return `<div class="picker">
       <label>天干</label><div class="chips">${STEMS.map(g => `<button class="chip" data-hg="${g}" aria-pressed="${g === huaG}">${g}<span class="s">${SIHUA[g].map(Z.starShort).join("")}</span></button>`).join("")}</div>
       <label>表號</label><div class="chips">${TABLES.map((_, k) => `<button class="chip" data-ht="${k + 1}" aria-pressed="${huaT === k + 1}">表${k + 1}<span class="s">紫${BR[k]}</span></button>`).join("")}</div>
-      ${auxRow("左右")}${auxRow("昌曲")}
     </div>
+    <details class="sixstars" ${sixOpen || Object.keys(at).length ? "open" : ""}><summary>輔星・煞星・祿存（與四化相關，依需要安上）</summary>
+      <div class="picker">${stemRow}${auxRow("左右")}${hourSel}${hourRow("昌曲")}${hourRow("空劫")}</div>
+      <p class="note-src">祿存、擎羊、陀羅、天魁、天鉞由天干決定，選「安」就自動排上；左右由出生月決定，指定一顆，另一顆自動安上。魁鉞依「甲戊庚牛羊…六辛逢馬虎」，各派略有出入。火星、鈴星要看年支與男女，和四化無關，這裡不安。</p>
+    </details>
     <div class="study">
       <div><div class="chart hchart">${h}</div>
-        <div class="legend">${[0, 1, 2, 3].map(i => `<span>${badge(i)} 化${HUA[i]}</span>`).join("")}<span><i style="background:var(--indigo-soft)"></i>四化所在宮</span><span style="color:var(--indigo)">藍字為輔星</span></div></div>
+        <div class="legend">${[0, 1, 2, 3].map(i => `<span>${badge(i)} 化${HUA[i]}</span>`).join("")}<span><i style="background:var(--indigo-soft)"></i>四化所在宮</span><span class="aux">藍字吉星</span><span class="sha">紅字煞星</span><span class="lu">金字祿存</span></div></div>
       <article class="card"><h2>表${huaT}・${huaG}干</h2>
         <h3>四化落宮</h3>${fall}
         <h3>四化之間</h3>${now}
-        <p class="note-src">暗合即地支六合（子丑、寅亥、卯戌、辰酉、巳申、午未）。輔星位置由出生月、時辰決定，這裡由你指定；不安也可以，只看主星的四化。</p></article>
+        <p class="note-src">暗合即地支六合（子丑、寅亥、卯戌、辰酉、巳申、午未）。六吉六煞可以不安，只看主星的四化；安上後會列出同宮、夾宮與三方四正會照的星。</p></article>
     </div>
     <h3 class="sec">十二表通觀：${huaG}干四化兩兩之間的關係</h3>
     <div class="ovw"><table class="hm">
@@ -603,20 +642,32 @@ function huaTableHTML() {
       <tfoot><tr><th scope="row">合計</th>${pairs.map(x => `<td>${sum(x)}</td>`).join("")}</tr></tfoot>
     </table></div>
     <div class="note-src prose"><p><b>為什麼有些關係十二表都一樣？</b>紫微星系（紫微、天機、太陽、武曲、天同、廉貞）和天府星系（天府、太陰、貪狼、巨門、天相、天梁、七殺、破軍）各自整組移動。同一星系的兩星<b>距離</b>固定，所以同宮、三合、對宮十二表都一樣；不同星系的兩星位置<b>和</b>固定（以某條軸互為鏡射），所以暗合要嘛十二表都成立、要嘛都不成立，其他關係則隨表號改變。</p>
-      <p>輔星不隨表號移動。左輔與右弼、文昌與文曲的位置和恆為 2，以丑未為軸對稱，所以只有在丑、未會同宮。</p></div>`;
+      <p>六吉六煞不隨表號移動。左輔與右弼、文昌與文曲的位置和恆為 2，以丑未為軸對稱，只有在丑、未會同宮；地空與地劫的位置和恆為 10，以巳亥為軸對稱，只有在巳、亥會同宮。擎羊、陀羅永遠一前一後夾著祿存。</p></div>`;
 }
 $("#v-sihua").addEventListener("click", e => {
   const q = s => e.target.closest(s);
-  const m = q("[data-hm]"), s = q("[data-hs]"), g = q("[data-hg]"), t = q("[data-ht]"), w = q("[data-aw]"), ab = q("[data-ab]");
+  const m = q("[data-hm]"), s = q("[data-hs]"), g = q("[data-hg]"), t = q("[data-ht]"), w = q("[data-aw]"), ab = q("[data-ab]"), so = q("[data-son]");
+  const hh = q("[data-hh]"), hw = q("[data-hw]"), hon = q("[data-hon]"), hp = q("[data-hp]");
   if (m) huaMode = m.dataset.hm;
   else if (s) huaSel = s.dataset.hs;
   else if (g) huaG = g.dataset.hg;
   else if (t) huaT = +t.dataset.ht;
-  else if (w) { const a = huaAux[w.dataset.aw]; a.who = AUX[a.who]; if (a.b != null) a.b = Z.auxPartnerAt(a.b); }   // 換一顆指定，盤面不變
+  else if (w) { const a = huaAux[w.dataset.aw], o = a.who; a.who = Z.PAIRS[o]; if (a.b != null) a.b = Z.pairAt(o, a.b); }   // 換一顆指定，盤面不變
+  else if (so) huaStemOn[so.dataset.son] = !huaStemOn[so.dataset.son];
+  else if (hh) huaHour = hh.dataset.hh === "" ? null : +hh.dataset.hh;
+  else if (hw) { const k = hw.dataset.hw; huaWho[k] = WHO_SWAP[huaWho[k]]; }
+  else if (hon) huaOn[hon.dataset.hon] = false;
+  else if (hp) {
+    const [k, v] = hp.dataset.hp.split(":"), who = huaWho[k];
+    huaHour = Z.HOUR_OF[who](+v);
+    huaOn[k] = true;
+  }
   else if (ab) { const [k, v] = ab.dataset.ab.split(":"); huaAux[k].b = v === "" ? null : +v; }
   else return;
   flush(); renderSihua();
 });
+
+$("#v-sihua").addEventListener("toggle", e => { if (e.target.matches("details.sixstars")) sixOpen = e.target.open; }, true);
 
 /* ───────── 四化日記 ───────── */
 let diarySel = null, diaryFilter = "all", newStem = null, newDate = null;
@@ -653,7 +704,8 @@ function renderDiary() {
       <div class="dlist">${shown.map(p => `<button class="ditem" data-dopen="${esc(p)}" aria-pressed="${p === diarySel}"><b>${esc(Z.getFront(S.notes.get(p), "日期"))}</b><span>${esc(stemOf(p))}日</span><small>${esc(excerpt(p))}</small></button>`).join("") || `<p class="empty">${list.length ? "這個天干還沒有日記。" : "還沒有日記，從左上角開始寫第一篇。"}</p>`}</div></article>`;
   const right = diarySel ? diaryPanel(diarySel) : `<article class="card"><h2>四化日記</h2>
     <p>每天觀察當日天干的四化，對照自己當天的念頭與事件。寫久了，會慢慢分辨哪些是星曜的特性、哪些是自己的投射。</p>
-    <ol class="steps"><li>選日期，查萬年曆選當天的天干。</li><li>按「開始寫」，記下今天發生的事。</li><li>對照四化：哪件事像化祿、化權、化科、化忌？</li><li>過幾天回頭看，同一個天干的日子有沒有共同的味道。</li></ol></article>`;
+    <ol class="steps"><li>選日期，查萬年曆選當天的天干。</li><li>按「開始寫」，記下今天發生的事。</li><li>對照四化：哪件事像化祿、化權、化科、化忌？</li><li>過幾天回頭看，同一個天干的日子有沒有共同的味道。</li></ol>
+    <p class="note-src">喜歡手寫？<a href="紫微144格練習簿.pdf" download>PDF 練習簿</a>的四化日記章有甲日到癸日十個範本，印出來就能寫。</p></article>`;
   $("#v-diary").innerHTML = `<div class="study diary"><div class="dleft">${left}</div><div>${right}</div></div>`;
 }
 function diaryPanel(p) {
@@ -829,7 +881,7 @@ function renderBooks() {
     <li><b>疊加宮位</b>：《談星際關係》對十二宮關係。</li>
   </ol>
   <h2>PDF 練習簿</h2>
-  <p>喜歡手寫的話，可以<a href="紫微144格練習簿.pdf" download>下載 PDF 練習簿</a>印出來：A4 共 190 頁，包含十四主星、144 格各一頁（盤面、格局古訣、手寫欄）、每張表的默寫測驗（答案倒印在頁尾），以及附頁碼的格局總表。</p>
+  <p>喜歡手寫的話，可以<a href="紫微144格練習簿.pdf" download>下載 PDF 練習簿</a>印出來：A4 共 213 頁，包含十四主星、144 格各一頁（盤面、格局古訣、手寫欄）、每張表的默寫測驗（答案倒印在頁尾）、四化學習（十干各一頁，附十二表通觀與輔星安星對照）、甲日到癸日十個四化日記範本（可影印重複使用），以及附頁碼的格局總表。</p>
   <h2>結構速查（程式窮舉驗證）</h2>
   <ul>
     <li>命宮組合共 39 種：單星 14 種（11 星各坐 6 格，紫微、武曲、廉貞單坐各 2 格），雙星 24 種各 2 格，空宮 24 格。</li>
@@ -874,7 +926,7 @@ function renderHelp() {
     <li><b>寫筆記</b>：盤面下方直接打字，會自動存檔。</li>
     <li><b>看進度</b>：「開始」頁會顯示讀到哪裡，並帶你讀下一格。</li>
     <li><b>練習</b>：隨機出題，答錯的題目之後會再出現。</li>
-    <li><b>四化學習</b>：「四化星性」熟記十干四化並寫星性筆記；「四化入表」看四化在十二表中同宮、三合、對宮、暗合的分布，左輔右弼、文昌文曲指定一顆，另一顆自動安上。</li>
+    <li><b>四化學習</b>：「四化星性」熟記十干四化並寫星性筆記；「四化入表」看四化在十二表中同宮、三合、對宮、暗合的分布，與四化相關的輔星、煞星可選擇安或不安：祿存、羊陀、魁鉞隨天干自動排；左右指定一顆，另一顆自動安上；昌曲、空劫共用一個時辰，指定任一顆，另一組一起移動，不會排出不存在的盤。火鈴和四化無關，不安。安上後會列出四化同宮、被夾、三方四正會照的星。</li>
     <li><b>四化日記</b>：選日期、查萬年曆選當天天干，帶出當天四化寫日記。同一天已經寫過會提醒，不會覆蓋；可以補寫之前的日子。</li>
   </ul>
   <h2>第一次使用，請先做這一步</h2>
@@ -890,7 +942,7 @@ function renderHelp() {
   <h2>用手機、iPad、Safari 的同學</h2>
   <p>一樣可以讀、寫筆記，但筆記會存在瀏覽器裡。請記得到「<a href="#backup">筆記與備份</a>」按「匯出備份」，把 zip 檔存好。也請不要用無痕視窗，關掉後筆記就會消失。</p>
   <h2>喜歡手寫的同學</h2>
-  <p>可以<a href="紫微144格練習簿.pdf" download>下載 PDF 練習簿</a>（A4，190 頁）：每格一頁，附手寫欄和每張表的默寫測驗，印出來搭配書讀。</p>
+  <p>可以<a href="紫微144格練習簿.pdf" download>下載 PDF 練習簿</a>（A4，213 頁）：每格一頁，附手寫欄和每張表的默寫測驗；還有四化學習章和十個四化日記範本，印出來搭配書讀。</p>
   <h2>沒有網路時</h2>
   <p>${ONLINE ? `頁首右上角有「<a href="紫微研習包.zip" download>下載離線版</a>」（約 9MB，含 PDF 練習簿），解壓縮後雙擊「紫微研習.html」，沒有網路也能用。` : `你現在用的就是離線版。研習包資料夾整個複製或壓縮帶走即可。`}離線版和線上版可以共用同一個筆記資料夾；筆記存在瀏覽器裡的話，兩邊是分開的，要用「匯出備份」再「匯入」搬過去。</p>
   <h2>建議讀法</h2>
