@@ -186,6 +186,7 @@ const BOOKS = [
  ["慧心齋主談星際關係","大塊文化・生命之旅","2025","9786267594315","十二宮與星曜彼此關係，第四章論戀愛婚姻。書末附基礎命盤表一至表十二，與本研習的表號對照。"],
  ["紫微斗數新詮 四十周年增訂版","大塊文化・生命之旅","2021","9789865549411","附修練指引手冊。名詞、十二宮、各星系分析，星性基礎。"],
  ["紫微四化星","大塊文化・生命之旅","2021","9789865549428","副題「如何改變一生的祕笈」，附奇妙修練日記簿。甲至癸十干四化逐章、四化與大運流年、十個命例。"],
+ ["紫微斗數開發潛能","時報文化","—","—","諸星的精神潛能與物質潛能、幸運色與矯正色、最大精神剋星與物質剋星，七個命例示範潛能調和（本職與業餘分流）。"],
  ["紫微斗數全書","明刊本","—","—","〈太微賦〉〈骨髓賦〉〈形性賦〉〈女命骨髓賦〉〈諸星問答論〉及定富局、定貴局。格局總表的古訣底本，各刊本文字略異。"],
 ];
 
@@ -243,8 +244,10 @@ const HUA_TXT = {
  "太陰化科":"細膩與品味受肯定，女性貴人相助。",
  "貪狼化忌":"欲望受挫或沉迷，交際、娛樂、桃花之困；宜節制。",
 };
-// 《紫微四化星》要點：待補（關鍵詞＋章節出處，不抄原文）
-const HUA_BOOK = {};
+// 書中內容在 src/data/：解說.js（兩本書的研讀重點，摘要改寫，非原文）、命例.js、十干四化.js（日記用）
+const DATA_FILES = ["解說", "命例", "十干四化"];
+const BOOK = typeof module !== "undefined" && module.exports ? Object.assign({}, ...DATA_FILES.map(f => require(`./data/${f}.js`))) : root.ZW_BOOK;
+const HUA_BOOK = BOOK.HUA_BOOK;
 
 /** 兩宮（支序）之間的關係 */
 function relOf(a, b) {
@@ -270,6 +273,93 @@ const HOUR_OF = { 文昌: b => mod(10 - b), 文曲: b => mod(b - 4), 地劫: b =
 const LUCUN = { 甲: 2, 乙: 3, 丙: 5, 丁: 6, 戊: 5, 己: 6, 庚: 8, 辛: 9, 壬: 11, 癸: 0 };
 // 天魁天鉞：甲戊庚牛羊，乙己鼠猴鄉，丙丁豬雞位，壬癸兔蛇藏，六辛逢馬虎
 const KUIYUE = { 甲: [1, 7], 戊: [1, 7], 庚: [1, 7], 乙: [0, 8], 己: [0, 8], 丙: [11, 9], 丁: [11, 9], 壬: [3, 5], 癸: [3, 5], 辛: [6, 2] };
+/* ───────── 生辰排盤：命宮、身宮、五行局、紫微、大限 ─────────
+   農曆月 m（1–12）、日 d（1–30）、時辰 h（子=0）。閏月與晚子時等細節依各派處理，這裡不處理。 */
+const GAN = "甲乙丙丁戊己庚辛壬癸";
+const NAYIN = "金火木土金火水土金木水土火木水金火木土金火水土金木水土火木水";   // 六十甲子納音五行，每兩干支一個
+const NAYIN_NAME = "海中金 爐中火 大林木 路旁土 劍鋒金 山頭火 澗下水 城頭土 白蠟金 楊柳木 泉中水 屋上土 霹靂火 松柏木 長流水 沙中金 山下火 平地木 壁上土 金箔金 覆燈火 天河水 大驛土 釵釧金 桑柘木 大溪水 沙中土 天上火 石榴木 大海水".split(" ");
+const JU = { 水: 2, 木: 3, 金: 4, 土: 5, 火: 6 };
+const JU_NAME = { 2: "水二局", 3: "木三局", 4: "金四局", 5: "土五局", 6: "火六局" };
+const mingAt = (m, h) => mod(2 + m - 1 - h);   // 寅起正月順數到生月，再從子時逆數到生時
+const shenAt = (m, h) => mod(2 + m - 1 + h);   // 同上，但順數到生時
+// 五虎遁：甲己之年丙作首（寅宮天干），乙庚戊、丙辛庚、丁壬壬、戊癸甲；由寅順排到丑，子丑接在亥之後
+const palaceStem = (g, b) => mod(2 * (GAN.indexOf(g) % 5) + 2 + mod(b - 2), 10);
+const ganzhi = (s, b) => mod(6 * s - 5 * b, 60);   // 干支在六十甲子中的序（甲子=0）
+function juOf(g, b) { const n = ganzhi(palaceStem(g, b), b); return { ju: JU[NAYIN[n >> 1]], nayin: NAYIN_NAME[n >> 1], gz: GAN[palaceStem(g, b)] + BR[b] }; }
+/** 安紫微：日數加 x 補到能被局數整除，商為從寅起數的格數；x 奇數逆退 x 格、偶數順進 x 格 */
+function ziweiAt(ju, d) {
+  let x = 0; while ((d + x) % ju) x++;
+  const q = (d + x) / ju;
+  return { b: mod(2 + q - 1 + (x % 2 ? -x : x)), x, q };
+}
+/** 生辰 → 命盤骨架。g 年干、m 月、d 日、h 時辰（0–11）、sex 男／女（大限方向用，可省） */
+function birthChart({ g, m, d, h, sex }) {
+  const ming = mingAt(m, h), shen = shenAt(m, h), J = juOf(g, ming), Zw = ziweiAt(J.ju, d), t = Zw.b + 1;
+  const yang = GAN.indexOf(g) % 2 === 0, dir = sex ? ((yang === (sex === "男")) ? 1 : -1) : 0;
+  const daxian = dir ? Array.from({ length: 12 }, (_, i) => { const b = mod(ming + dir * i); return { b, gz: GAN[palaceStem(g, b)] + BR[b], from: J.ju + 10 * i, to: J.ju + 10 * i + 9 }; }) : [];
+  return { g, m, d, h, sex, ming, shen, ...J, z: Zw.b, zx: Zw.x, zq: Zw.q, t, cell: cellId(t, ming), shenPal: PAL[mod(ming - shen)], dir, daxian, yang };
+}
+// 年支安天馬、火星、鈴星（《全書》通行起法：火鈴依年支起子時，順數到生時；各派另有陽男陰女之別，這裡不分）
+const TIANMA = { 申: 2, 子: 2, 辰: 2, 寅: 8, 午: 8, 戌: 8, 巳: 11, 酉: 11, 丑: 11, 亥: 5, 卯: 5, 未: 5 };
+const HUOLING = { 寅: [1, 3], 午: [1, 3], 戌: [1, 3], 申: [2, 10], 子: [2, 10], 辰: [2, 10], 巳: [3, 10], 酉: [3, 10], 丑: [3, 10], 亥: [9, 10], 卯: [9, 10], 未: [9, 10] };
+/** 生年干支、月、時辰安輔星與煞星（地支序）：左輔辰起正月順、右弼戌起正月逆，昌曲空劫依時辰 */
+function auxOf({ g, yb, m, h }) {
+  const L = LUCUN[g], [k, y] = KUIYUE[g], o = { 左輔: mod(4 + m - 1), 右弼: mod(10 - m + 1) };
+  for (const s of ["文昌", "文曲", "地劫", "地空"]) o[s] = HOUR_AT[s](h);
+  Object.assign(o, { 祿存: L, 擎羊: mod(L + 1), 陀羅: mod(L - 1), 天魁: k, 天鉞: y });
+  if (yb) Object.assign(o, { 天馬: TIANMA[yb], 火星: mod(HUOLING[yb][0] + h), 鈴星: mod(HUOLING[yb][1] + h) });
+  return o;
+}
+/** 「甲子年8月15日亥時」→ { g, yb, m, d, h }；寫錯格式會丟出錯誤（npm run verify 會抓到） */
+function parseBirth(str) {
+  const x = /^(.)(.)年(\d+)月(\d+)日(.)時$/.exec(str || "");
+  if (!x || !GAN.includes(x[1]) || !BR.includes(x[2]) || !BR.includes(x[5])) throw new Error("生辰格式應為「甲子年8月15日亥時」：" + str);
+  return { g: x[1], yb: x[2], m: +x[3], d: +x[4], h: BR.indexOf(x[5]) };
+}
+const birthOf = str => { if (!str) return null; const r = parseBirth(str); return { ...birthChart(r), aux: auxOf(r) }; };
+
+/** 書中命例對應到 144 格。三方核對：筆記標註的表號與命宮、生辰排盤、命宮主星。
+    以命宮主星為準：生辰排出的命宮主星和書中所列相同，就取生辰的格位（連命宮地支一起更正）；
+    否則依主星在標註的命宮地支找表號（可能 0 個或多個）。
+    v：ok 標註無誤／birth 依生辰更正（主星相符）／star 依主星更正（生辰不合或無生辰）／none 推不出 */
+const majorsIn = cfg => ORDER.filter(s => cfg.includes(s)).join();
+function resolveCase(c) {
+  const b = BR.indexOf(c.br), want = majorsIn(c.cfg), bc = birthOf(c.birth);
+  const tabs = TABLES.map((P, k) => P[b].join() === want ? k + 1 : 0).filter(Boolean);
+  const bFit = bc && TABLES[bc.t - 1][bc.ming].join() === want;
+  let v, cells;
+  if (bFit) { v = bc.t === c.t && bc.ming === b ? "ok" : "birth"; cells = [bc.cell]; }
+  else if (tabs.includes(c.t)) { v = "ok"; cells = [cellId(c.t, b)]; }
+  else if (tabs.length) { v = "star"; cells = tabs.map(x => cellId(x, b)); }
+  else { v = "none"; cells = []; }
+  // 輔星核對：書中命宮所列輔煞，依生年、月、時安星後是否落在命宮（與日、局無關，可檢驗年月時是否抄對）
+  const mb = cells.length ? +cells[0].slice(2) : b;
+  const auxCheck = bc ? Object.keys(bc.aux).filter(s => c.cfg.includes(s)).map(s => ({ s, ok: bc.aux[s] === mb, at: bc.aux[s] })) : [];
+  // 身宮核對（《開發潛能》命例）：「身宮X：星」在所定的表中是否相符
+  const sm = /^身宮(.)：(.+)$/.exec(c.other || ""), shen = sm && cells.length === 1 ? { br: sm[1], want: majorsIn(sm[2]), got: TABLES[+cells[0].slice(0, 2) - 1][BR.indexOf(sm[1])] } : null;
+  return { ...c, b, bc, bFit: !!bFit, tabs, v, ok: v === "ok", cells, auxCheck, shenBad: !!shen && shen.got.join() !== shen.want, shen };
+}
+const CASES = BOOK.CASES.map(c => resolveCase({ ...c, src: c.book }));
+const casesOf = id => CASES.filter(c => c.cells.includes(id));
+const cellLabel = id => `表${+id.slice(0, 2)}・命${BR[+id.slice(2)]}`;
+const birthTxt = c => c.birth || "";
+function caseWhere(c) {
+  const lab = `筆記標表${c.t}・命${c.br}`, bc = c.bc;
+  const bTxt = bc ? `生辰（${birthTxt(c)}）排出${cellLabel(bc.cell)}、${JU_NAME[bc.ju]}` : "";
+  const sb = c.shenBad ? `；但身宮${c.shen.br}在此表為${c.shen.got.join("・") || "空宮"}，與書中不合，待查原書` : "";
+  if (c.v === "ok") return `表${c.t}・命${c.br}` + (bc && !c.bFit ? `；${bTxt}，命宮主星不合，生辰待查` : "") + sb;
+  if (c.v === "birth") return `${lab}；${bTxt}，命宮主星與書中相符，應為${cellLabel(c.cells[0])}`;
+  if (c.v === "star") return `${lab}；依命宮主星應為${c.tabs.map(x => `表${x}`).join("或")}・命${c.br}` + (bc ? `；${bTxt}，主星不合，待查原書` : "") + sb;
+  return `${lab}，十二表中沒有這個命宮組合` + (bc ? `；${bTxt}，主星也不合` : "") + "，請對照原書";
+}
+/** 大限、流年等動態命例：生辰排盤後的格位 */
+const DYN = BOOK.DYN_CASES.map(c => ({ ...c, bc: birthChart({ ...parseBirth(c.birth), sex: c.sex }) }));
+/** 十二宮顯像：某化在地支 b 的書中說法（段首地支或段中「某宮」符合者；無地支的段落適用全盤） */
+function huaPalaceAt(name, b) {
+  const txt = BOOK.HUA_PALACE[name]; if (!txt) return [];
+  return txt.split("；").filter(seg => { const lead = (seg.match(/^[子丑寅卯辰巳午未申酉戌亥]+/) || [""])[0]; return !lead || lead.includes(BR[b]) || seg.includes(BR[b] + "宮"); });
+}
+const caseLine = c => c.src === "hua" ? `${c.g}年 ${c.who}（${c.cfg}）：${c.txt}` : `${c.who}（${c.cfg}；${c.other}）：${c.kind}。${c.fix}`;
 /** 隨天干的星：on = {祿存, 羊陀, 魁鉞} 哪幾組要安 */
 function stemStars(g, on = {}) {
   const o = {}, L = LUCUN[g];
@@ -411,7 +501,10 @@ ${bLines}
 - 暗合宮：${anheLine(c)}
 - 同組合：${sib.map(x => `[[${cname(x)}]]`).join("、") || "無"}
 - 本表：[[${tname(t)}]]
-
+${casesOf(c.id).length ? `
+## 書中命例
+${casesOf(c.id).map(x => `- ${caseLine(x)}　見 [[${x.src === "hua" ? BOOK.HUA_SRC : BOOK.POT_SRC}]]${x.ok && !x.bc ? "" : "（" + caseWhere(x) + "）"}`).join("\n")}
+` : ""}
 ## 古籍摘記
 
 
@@ -545,8 +638,13 @@ tags: [紫微格局]
 ` + rows.join("\n"));
 }
 
+function potLines(s) {
+  const P = BOOK.POT[s];
+  return [["精神潛能", P.mind], ["物質潛能", P.body], ["幸運顏色", P.lucky], ["矯正顏色", P.fix], ["最大精神剋星", P.kMind], ["最大物質剋星", P.kBody],
+    ["心理機制", P.core], ["精神轉化", P.tMind], ["物質轉化", P.tBody], ["最適環境", P.jobs]].map(([k, v]) => `- ${k}：${v}`).join("\n");
+}
 function starNote(s) {
-  const S = STARS[s];
+  const S = STARS[s], HS = BOOK.HUA_STAR[s];
   const seats = CELLS.filter(c => c.stars.includes(s));
   const hl = Object.entries(SIHUA).flatMap(([g, a]) => a.map((x, i) => x === s ? `${g}化${"祿權科忌"[i]}` : null)).filter(Boolean).join("、") || "不參與生年四化";
   const combos = {};
@@ -572,6 +670,13 @@ ${S.kw}
 - 坐命 ${seats.length} 格
 ${Object.entries(combos).map(([k, v]) => `  - ${k}：` + v.join("、")).join("\n")}
 - 坐命可成之格：${pats.map(x => `[[${x}]]`).join("、") || "無"}
+
+## 四化（[[${BOOK.HUA_SRC}]]）
+${HS.no ? HS.no + "。" : ""}${HS.sum}
+${HUA_NAMES.filter(n => n.startsWith(s)).map(n => `- **${n}**：${HUA_BOOK[n]}`).join("\n")}
+
+## 潛能（[[${BOOK.POT_SRC}]]）
+${potLines(s)}
 
 ## 古籍（諸星問答論等）
 
@@ -773,8 +878,26 @@ ${rows}
 
 祿存隨天干（甲寅、乙卯、丙戊巳、丁己午、庚申、辛酉、壬亥、癸子），擎羊在祿存前一宮、陀羅在後一宮，永遠夾著祿存。天魁天鉞依「甲戊庚牛羊，乙己鼠猴鄉，丙丁豬雞位，壬癸兔蛇藏，六辛逢馬虎」，各派略有出入。
 
+## 《紫微四化星》要點
+摘要改寫自研讀筆記，不是原書文字；頁碼請對照 [[${BOOK.HUA_SRC}]]，用自己的話寫進 [[我的四化星性]]。
+
+| 四化 | ${BOOK.HUA_DIMS.join(" | ")} |
+|---|---|---|---|---|
+${BOOK.HUA_DIM.map((r, i) => `| 化${HUA[i]} | ${r.join(" | ")} |`).join("\n")}
+
+${STEMS.map(g => `### ${g}干\n` + SIHUA[g].map((s, i) => `- **${s}化${HUA[i]}**：${HUA_BOOK[s + "化" + HUA[i]]}`).join("\n")).join("\n\n")}
+
+### 六吉六煞與祿存
+${BOOK.HUA_AUX.map(([k, v]) => `- **${k}**：${v}`).join("\n")}
+
+### 天羅地網（辰、戌）
+${BOOK.TIANLUO.map(([k, v]) => `- **${k}**：${v}`).join("\n")}
+
+### 重疊看盤
+${BOOK.OVERLAY.map(([k, a, b]) => `- **${k}**：${a}（${b}）`).join("\n")}
+
 ## 通行說法
-以下是入門提要，不是《紫微四化星》原文；書中要點請對照原書，用自己的話寫進 [[我的四化星性]]。
+以下是入門提要，和上面的書中要點並讀。
 
 ${txt}
 `);
@@ -791,9 +914,11 @@ tags: [紫微四化]
 
 ` + HUA_NAMES.map(n => `## ${n}\n\n`).join("\n"));
 }
+/** 日記用的四化解說（《十干四化全輯》，依天干）；沒有就退回通行說法 */
+const diaryHua = (g, i) => { const r = (BOOK.DIARY_HUA[g] || [])[i]; return r ? r[1] : HUA_TXT[SIHUA[g][i] + "化" + HUA[i]]; };
 function huaTodayText(g) {
   if (!SIHUA[g]) return "（還沒選天干）";
-  return `${g}干四化：\n` + SIHUA[g].map((s, i) => `- 化${HUA[i]}：${AUX[s] ? s : `[[${s}]]`}　${huaLink(s, i)}：${HUA_TXT[s + "化" + HUA[i]]}`).join("\n");
+  return `${g}干四化（解說取自《${BOOK.DIARY_SRC}》）：\n` + SIHUA[g].map((s, i) => `- 化${HUA[i]}：${AUX[s] ? s : `[[${s}]]`}　${huaLink(s, i)}：${diaryHua(g, i)}`).join("\n");
 }
 function diaryNote(date, g) {
   return clean(`---
@@ -951,7 +1076,8 @@ function normalizeImportPath(p) {
 
 const api = { BR, PAL, ORDER, SHORT, TABLES, CELLS, CELL, PATS, PK, BRIDGES, PARTNER, QUIET, SIHUA, STARS, BOOKS, DIV, EDIT, STATUS,
   mod, pad, cellId, twinOf, tname, cname, pfile, shortName, label, PATH,
-  HUA, STEMS, HUA_LIST, HUA_NAMES, HUA_TXT, HUA_BOOK, AUX, starShort, auxPartnerAt, auxPositions,
+  HUA, STEMS, HUA_LIST, HUA_NAMES, HUA_TXT, HUA_BOOK, BOOK, CASES, casesOf, caseWhere, cellLabel, birthTxt, DYN, huaPalaceAt,
+  GAN, NAYIN_NAME, JU_NAME, mingAt, shenAt, palaceStem, juOf, ziweiAt, birthChart, auxOf, TIANMA, HUOLING, parseBirth, DATA_FILES, diaryHua, AUX, starShort, auxPartnerAt, auxPositions,
   LUCKY, UNLUCKY, PAIRS, pairAt, LUCUN, KUIYUE, stemStars, jiaAt, HOUR_AT, HOUR_OF, relOf, huaPlaces, huaPairs,
   diaryNote, setDiaryStem, setDiaryDate,
   cellNote, tableNote, patNote, starNote, allNotes,

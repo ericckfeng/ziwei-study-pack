@@ -263,3 +263,34 @@ details.sixstars .picker{margin:10px 0 4px}
 details.sixstars .warn{margin:8px 0 0;padding:6px 10px;font-size:13px;color:var(--cinnabar);background:var(--cinnabar-soft)}
 details.sixstars .picker .chips+.chips{margin-top:4px}
 .chip[disabled]{opacity:.4;cursor:not-allowed}
+/* 慧心齋主兩書重點：潛能、命例 */
+.prose.wide{max-width:none}
+.kv.pk{grid-template-columns:5.5em 1fr;font-size:13px}
+.kv.pk dd{font-weight:500}
+.kv.bk{grid-template-columns:7em 1fr;gap:6px 14px}
+.kv.bk dd{font-family:var(--f-body);font-weight:400}
+.pmore{margin-top:8px}
+.pmore p{font-size:13px;margin:6px 0}
+.pot{font-size:14px;padding:4px 0 4px 10px;border-left:3px solid var(--jade);margin-bottom:6px}
+.pot b{font-family:var(--f-display)}
+.pot small{display:block;color:var(--ink-2);font-size:12px}
+.cases{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px}
+.case{background:var(--sheet);border:1px solid var(--rule);border-left:3px solid var(--indigo);padding:8px 12px;font-size:14px;margin-bottom:6px}
+.cases .case{margin:0}
+.case b{font-family:var(--f-display)}
+.case .cfg{font-size:13px;color:var(--ink-2)}
+.case p{margin:4px 0}
+.case .fix{font-family:var(--f-body);font-size:12px;color:var(--jade);margin-right:6px}
+.cflag{font-size:12px;color:var(--gold);margin:4px 0}
+table.dims td{text-align:left;vertical-align:top}
+table.dims tbody th{white-space:nowrap;font-family:var(--f-display)}
+table.dims tbody th small{display:block;font-family:var(--f-body);font-weight:400;font-size:11px;color:var(--ink-2)}
+/* 生辰排盤 */
+.bform{flex-wrap:wrap;gap:8px 14px;align-items:center}
+.bform label{font-size:13px;color:var(--ink-2);display:flex;gap:6px;align-items:center}
+.bform select{font:inherit;color:var(--ink);background:var(--sheet);border:1px solid var(--rule);border-radius:3px;padding:3px 6px}
+.pal .dx{position:absolute;left:50%;transform:translateX(-50%);bottom:3px;font-family:var(--f-mono);font-size:11px;color:var(--ink-2)}
+.pal .stars .hs{color:var(--cinnabar)}
+.steps{padding-left:1.3em;margin:0;font-size:14px;display:grid;gap:8px}
+.steps em{font-style:normal;color:var(--cinnabar)}
+.alt{display:block;font-size:12px;font-weight:400;color:var(--gold);font-family:var(--f-body)}

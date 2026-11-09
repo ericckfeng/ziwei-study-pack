@@ -288,7 +288,7 @@ const ASK = ["哪裡順、得到好處？", "哪裡在主導、爭取？", "哪�
 const diaryPages = STEMS.map(g => page(`
   <div class="hd"><div><div class="eyebrow">四化日記範本　${STEMS.indexOf(g) + 1}／10　可影印重複使用</div><h2>${g}日　<span class="h2s">${huaShort(g)}</span></h2></div>
     <div class="meta dmeta">日期　＿＿＿＿年＿＿月＿＿日<br>干支　${g}＿日　　星性 ${pg(huaStemPage(g))}</div></div>
-  <table class="dh"><tbody>${SIHUA[g].map((s, i) => `<tr><th>${hb(i)} ${s}化${HUA[i]}</th><td>${HUA_TXT[s + "化" + HUA[i]]}</td><td class="ask">今天${ASK[i]}</td></tr>`).join("")}</tbody></table>
+  <table class="dh"><tbody>${SIHUA[g].map((s, i) => `<tr><th>${hb(i)} ${s}化${HUA[i]}</th><td>${Z.diaryHua(g, i)}</td><td class="ask">今天${ASK[i]}</td></tr>`).join("")}</tbody></table>
   <div class="writes">
     ${lines("今日事件", "只記事實：發生了什麼、和誰、在哪裡。", 1.2)}
     <div class="write dmap" style="flex-grow:1.1"><div class="wh"><b>對應四化</b><span>把事件對到祿權科忌，對不上就寫「對不上」。</span></div>

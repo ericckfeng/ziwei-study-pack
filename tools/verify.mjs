@@ -56,6 +56,39 @@ assert.equal(Z.huaPairs("壬")[1].rels, null, "壬：左輔未安");
 assert.equal(new Set(Z.huaPairs("壬", { 右弼: 3 })[1].rels).size > 1, true);
 assert.equal(Z.huaPlaces(1, "壬", { 右弼: 3 })[2].b, Z.mod(2 - 3), "右弼卯→左輔亥");
 assert.equal(Z.relOf(6, 7), "暗合・鄰宮"); assert.equal(Z.relOf(2, 6), "三合"); assert.equal(Z.relOf(0, 6), "對宮");
+// 慧心齋主兩書重點（book.js）
+assert.deepStrictEqual(Object.keys(Z.HUA_BOOK).sort(), [...Z.HUA_NAMES].sort(), "每一化都有書中要點");
+for (const s of Z.ORDER) {
+  assert.ok(Z.BOOK.POT[s] && Z.BOOK.HUA_STAR[s], s + " 有潛能與四化總評");
+  const no = Z.BOOK.HUA_STAR[s].no, banned = no === "全無四化" ? "祿權科忌" : [...no.matchAll(/不化([祿權科忌])/g)].map(m => m[1]).join("");
+  for (const h of banned) assert.ok(!Z.HUA_LIST.some(x => x.star === s && Z.HUA[x.i] === h), `${s}不化${h}，但四化表有`);
+}
+assert.equal(Z.CASES.length, 47);
+for (const c of Z.CASES) {
+  assert.ok(c.b >= 0 && c.cells.every(id => Z.CELL[id]), c.who + " 格位");
+  if (c.src === "hua") assert.ok(Z.SIHUA[c.g].some((s, i) => c.cfg.includes(s + "化" + Z.HUA[i])), c.who + " 命宮的化星屬於年干");
+}
+// 生辰排盤：紫微安星表（各局初一至初六）、命身宮、五虎遁納音、書中命例
+assert.equal([2, 3, 4, 5, 6].map(j => Z.BR[Z.ziweiAt(j, 1).b]).join(""), "丑辰亥午酉", "各局初一紫微");
+assert.equal([2, 3, 4, 5, 6].map(j => Z.BR[Z.ziweiAt(j, j).b]).join(""), "寅寅寅寅寅", "日數等於局數，紫微在寅");
+for (let m = 1; m <= 12; m++) for (let h = 0; h < 12; h++) assert.equal(Z.mod(Z.shenAt(m, h) - Z.mingAt(m, h)), Z.mod(2 * h), "身宮＝命宮＋2×時");
+assert.equal(Z.juOf("甲", 0).gz, "丙子", "甲年子宮為丙子（子丑接在亥之後）");
+assert.equal(Z.juOf("庚", 3).nayin, "城頭土");
+let bc = Z.birthChart({ g: "庚", m: 3, d: 5, h: 1, sex: "男" });   // 魏先生
+assert.deepStrictEqual([bc.t, Z.BR[bc.ming], bc.ju], [3, "卯", 5], "魏先生：表3・命卯・土五局");
+bc = Z.birthChart({ g: "辛", m: 10, d: 27, h: 3, sex: "男" });   // 潘先生：書中乙未大限 16–25
+assert.deepStrictEqual([bc.daxian[1].gz, bc.daxian[1].from], ["乙未", 16]);
+assert.equal(Z.CASES.filter(c => c.bFit).length, 33, "生辰排出的命宮主星與書中相同");
+assert.ok(Z.CASES.every(c => c.auxCheck.every(a => a.ok)), "命宮輔煞全部落在命宮");
+assert.equal(Z.CASES.find(c => c.who === "丙女士").shenBad, true, "丙女士身宮矛盾");
+for (const [n, t] of Object.entries(Z.BOOK.HUA_PALACE)) assert.ok(Z.HUA_NAMES.includes(n) && t.split("；").every(x => x.length > 2), n + " 十二宮顯像");
+// 資料檔：十干四化（日記用）星名須與四化表一致；命例欄位與生辰格式
+for (const g of Z.STEMS) assert.deepStrictEqual(Z.BOOK.DIARY_HUA[g].map(r => r[0]), Z.SIHUA[g].map((s, i) => s + "化" + Z.HUA[i]), g + "干十干四化");
+for (const c of Z.BOOK.CASES) {
+  assert.ok(c.who && ["hua", "pot"].includes(c.book) && c.t >= 1 && c.t <= 12 && Z.BR.includes(c.br) && c.cfg, "命例欄位：" + c.who);
+  if (c.birth) Z.parseBirth(c.birth);
+}
+assert.notEqual(Z.diaryHua("乙", 3), Z.diaryHua("庚", 3), "乙、庚太陰化忌的日記解說各自不同");
 // 四化日記
 let dy = Z.diaryNote("2026-11-09", "丁");
 assert.equal(Z.getFront(dy, "天干"), "丁"); assert.match(Z.getSection(dy, "今日四化"), /化忌：\[\[巨門\]\]/);

@@ -17,6 +17,7 @@ const put = (rel, data) => { const f = path.join(OUT, rel); fs.mkdirSync(path.di
 const html = read("shell.html")
   .replace("/*STYLE*/", () => read("style.css"))
   .replace("/*VERSION*/", VERSION)
+  .replace("/*BOOK*/", () => Z.DATA_FILES.map(f => read(`data/${f}.js`)).join("\n"))
   .replace("/*CORE*/", () => read("core.js"))
   .replace("/*APP*/", () => read("app.js"));
 put("紫微研習.html", html);
