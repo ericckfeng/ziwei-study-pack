@@ -560,80 +560,89 @@ const ANCHOR = { tf: "天府", zw: "紫微", all: "紫微" };
 const SKELETON = {   // 知識庫第 14 條：三合骨架只分兩家族
   0: "紫廉武會府相；機同會巨；太陽會月梁；殺破狼自成一組",
   2: "紫廉武會殺破狼；機同會月梁；太陽會巨；府相自成一組" };
-const PX_DRILL = {
-  tf: [["練習一", "表4 命丑：太陰在哪一宮？福德宮是哪顆星？", { t: 4, m: 1 }, null],
-       ["練習二", "命宮改到寅：命宮、兄弟、父母各是什麼星？順序變了嗎？", { t: 4, m: 1 }, { t: 4, m: 2 }],
-       ["練習三", "換一張表（表10 命未）：和表4 命丑比，看到什麼？", { t: 4, m: 1 }, { t: 10, m: 7 }]],
-  zw: [["練習一", "表1 命子（紫微坐命）：廉貞、天同、武曲各在哪一宮？", { t: 1, m: 0 }, null],
-       ["練習二", "換到表7 命午，紫微也坐命：六顆星的宮位一樣嗎？", { t: 1, m: 0 }, { t: 7, m: 6 }],
-       ["練習三", "同一張表，命宮移到丑：和天府系的練習二比較。", { t: 1, m: 0 }, { t: 1, m: 1 }]],
-  all: [["練習一", "鏡像兩表（表1 命子、表7 命午）：十四顆星的宮位一樣嗎？差在哪？", { t: 1, m: 0 }, { t: 7, m: 6 }],
-        ["練習二", "同家族、不同盤性（表1、表3，紫微都坐命）：三合一樣，對宮呢？", { t: 1, m: 0 }, { t: 3, m: 2 }],
-        ["練習三", "不同家族（表1、表2，紫微都坐命）：三合還一樣嗎？", { t: 1, m: 0 }, { t: 2, m: 1 }]],
+const PX_DRILL = {   // [名稱, 問題, 表, A 命, B 命]
+  tf: [["練習一", "表4 命丑：太陰在哪一宮？福德宮是哪顆星？", 4, 1, null],
+       ["練習二", "B 命改在寅：B 的命宮、兄弟、父母各是什麼星？和 A 比，順序變了嗎？", 4, 1, 2],
+       ["練習三", "B 命在 A 的對宮（未）：A 的遷移就是 B 的命宮，各宮的星怎麼對應？", 4, 1, 7]],
+  zw: [["練習一", "表1 命子（紫微坐命）：廉貞、天同、武曲各在哪一宮？", 1, 0, null],
+       ["練習二", "B 命在午（A 的遷移）：紫微系六顆星在 B 看來落在哪幾宮？", 1, 0, 6],
+       ["練習三", "B 命在丑（A 的父母）：和天府系的練習二比較。", 1, 0, 1]],
+  all: [["練習一", "表1：A 命子、B 命申（三合）。兩人的三方四正有幾宮重疊？", 1, 0, 8],
+        ["練習二", "表1：A 命子、B 命午（對宮）。互為遷移，三方四正只重疊命、遷兩宮，三合宮各走各的。", 1, 0, 6],
+        ["練習三", "表1：A 命子、B 命丑（暗合）。三方四正一宮都不重疊，靠什麼連結？", 1, 0, 1]],
 };
-const px = { mode: "tf", a: { t: 4, m: 1 }, b: null };
+const px = { mode: "tf", t: 4, a: 1, b: null, sf: true };
 const pxSys = () => px.mode === "tf" ? TF_SYS : px.mode === "zw" ? ZW_SYS : [...ZW_SYS, ...TF_SYS];
-const pxStars = (t, b) => TABLES[t - 1][b].filter(s => pxSys().includes(s));
+const pxStars = b => TABLES[px.t - 1][b].filter(s => pxSys().includes(s));
 const pxStar = s => `<span class="${ZW_SYS.includes(s) ? "pzw" : "ptf"}">${s}</span>`;
-const pxPos = (t, s) => TABLES[t - 1].findIndex(a => a.includes(s));
-function pxPicker(which, g) {
-  return `<label>${which === "a" ? "盤 A" : "盤 B"}</label><div><div class="chips">${TABLES.map((_, i) => `<button class="chip" data-pxt="${which}:${i + 1}" aria-pressed="${g.t === i + 1}">表${i + 1}<span class="s">紫${BR[i]}</span></button>`).join("")}</div>
-    <div class="chips" style="margin-top:4px">${[...BR].map((b, i) => `<button class="chip" data-pxm="${which}:${i}" aria-pressed="${g.m === i}">命${b}</button>`).join("")}${which === "b" ? '<button class="chip" data-pxoff>關閉比較</button>' : ""}</div></div>`;
+const pxSF = m => new Set([m, Z.mod(m + 4), Z.mod(m + 8), Z.mod(m + 6)]);
+const palOf = (m, b) => PAL[Z.mod(m - b)];
+function pxRel(a, b) {   // B 命對 A 命的關係
+  const d = Z.mod(b - a);
+  return d === 0 ? "同宮" : d === 6 ? "對宮" : d === 4 || d === 8 ? "三合" : Z.mod(a + b) === 1 ? "暗合" : d === 1 || d === 11 ? "鄰宮" : "無三合對宮";
 }
-function pxChart(which, g) {
-  const tri = new Set([g.m, Z.mod(g.m + 4), Z.mod(g.m + 8), Z.mod(g.m + 6)]);
+function pxChart() {
+  const A = px.a, B = px.b, sa = pxSF(A), sb = B == null ? new Set() : pxSF(B);
   let h = "";
   for (let r = 0; r < 4; r++) for (let k = 0; k < 4; k++) {
     const b = DIV[r][k];
-    if (b === null) { if (r === 1 && k === 1) h += `<div class="center"><div class="big">盤 ${which.toUpperCase()}</div><div class="sub">表${g.t}・紫微在${BR[g.t - 1]}・命${BR[g.m]}</div>${px.mode === "all" ? `<div class="sub">盤性：${storyOf(g.t)}</div>` : ""}<div class="sub">點任一宮，把命宮移過去</div></div>`; continue; }
-    const st = pxStars(g.t, b);
-    h += `<div class="pal ${b === g.m ? "ming" : tri.has(b) ? "tri" : ""}" data-pxb="${which}:${b}" role="button" tabindex="0" aria-label="${BR[b]}宮 ${PAL[Z.mod(g.m - b)]} ${st.join(" ") || "無"}"><div class="stars">${st.map(pxStar).join("") || '<span class="borrow">—</span>'}</div><span class="pn">${PAL[Z.mod(g.m - b)]}</span><span class="br">${BR[b]}</span></div>`;
+    if (b === null) { if (r === 1 && k === 1) h += `<div class="center"><div class="big">表${px.t}</div><div class="sub">紫微在${BR[px.t - 1]}・盤性：${storyOf(px.t)}</div><div class="sub"><b class="la">A 命${BR[A]}</b>${B != null ? `　<b class="lb">B 命${BR[B]}</b>` : ""}</div><div class="sub">點任一宮設 ${B == null ? "A" : "B"} 的命宮</div></div>`; continue; }
+    const st = pxStars(b), mk = px.sf ? (sa.has(b) ? '<i class="ma">A</i>' : "") + (sb.has(b) ? '<i class="mb">B</i>' : "") : "";
+    h += `<div class="pal pxp ${b === A ? "ma0" : ""} ${b === B ? "mb0" : ""}" data-pxb="${b}" role="button" tabindex="0" aria-label="${BR[b]}宮 A ${palOf(A, b)}${B != null ? " B " + palOf(B, b) : ""} ${st.join(" ") || "無"}">
+      ${mk ? `<div class="sfm">${mk}</div>` : ""}<div class="stars">${st.map(pxStar).join("") || '<span class="borrow">—</span>'}</div>
+      <div class="pnn"><span class="la">${palOf(A, b)}</span>${B != null ? `<span class="lb">${palOf(B, b)}</span>` : ""}</div><span class="br">${BR[b]}</span></div>`;
   }
   return `<div class="chart">${h}</div>`;
 }
-function pxSeq(g) {   // 從命宮順數十二宮
-  const cells = Array.from({ length: 12 }, (_, k) => { const b = Z.mod(g.m + k); return { b, pal: PAL[Z.mod(-k)], st: pxStars(g.t, b) }; });
-  return `<tr><th scope="row">表${g.t} 命${BR[g.m]}</th>${cells.map(c => `<td><div class="pp">${c.pal}<small>${BR[c.b]}</small></div>${c.st.map(pxStar).join("<br>") || '<span class="borrow">—</span>'}</td>`).join("")}</tr>`;
+function pxSeq(m, who) {   // 從命宮順數十二宮
+  const cells = Array.from({ length: 12 }, (_, k) => { const b = Z.mod(m + k); return { b, pal: PAL[Z.mod(-k)], st: pxStars(b) }; });
+  return `<tr><th scope="row" class="${who === "A" ? "la" : "lb"}">${who} 命${BR[m]}</th>${cells.map(c => `<td><div class="pp">${c.pal}<small>${BR[c.b]}</small></div>${c.st.map(pxStar).join("<br>") || '<span class="borrow">—</span>'}</td>`).join("")}</tr>`;
 }
 function pxCompare() {
-  const A = px.a, B = px.b, an = ANCHOR[px.mode];
-  const stepA = Z.mod(A.m - pxPos(A.t, an)), stepB = Z.mod(B.m - pxPos(B.t, an));
-  const where = (g, s) => s === 0 ? `命宮就是${an}` : `命宮在${an}之後第 ${s} 步`;
-  if (px.mode !== "all") return `<p><b>兩個盤的${PX_SEC[px.mode].slice(2)}順序完全相同。</b>差別只在命宮落在順序的哪一步：盤 A ${where(A, stepA)}，盤 B ${where(B, stepB)}。${stepA === stepB ? "兩盤命宮的位置也相同，所以每一宮看到的星都一樣，只是地支不同。" : `相差 ${Z.mod(stepB - stepA)} 步，所以每一宮的星都跟著移動 ${Z.mod(stepB - stepA)} 宮。`}</p>`;
-  const dA = storyD(A.t), dB = storyD(B.t);
-  if (dA === dB) return `<p><b>同一種盤性：${storyOf(A.t)}。</b>兩系錯開的格數相同（天府在紫微之後第 ${dA} 步）。${stepA === stepB ? "命宮相對紫微的位置也相同，十四顆星落在同樣的宮位，只差地支：這是鏡像格，廟旺與地支型格局會不同。" : `命宮相對紫微差 ${Z.mod(stepB - stepA)} 步，是同一劇本的不同位置。`}</p>`;
-  return `<p><b>不同盤性：</b>盤 A 是${storyOf(A.t)}，盤 B 是${storyOf(B.t)}。天府在紫微之後分別是第 ${dA} 步、第 ${dB} 步。${dA % 4 === dB % 4 ? `兩者同屬${familyOf(A.t).slice(0, 3)}，三合骨架相同（${SKELETON[dA % 4]}），差別在對宮。` : `兩者分屬${familyOf(A.t).slice(0, 3)}與${familyOf(B.t).slice(0, 3)}，連三合骨架都不同。`}</p>`;
+  const A = px.a, B = px.b, rel = pxRel(A, B), both = [...pxSF(A)].filter(x => pxSF(B).has(x));
+  const an = ANCHOR[px.mode], step = m => Z.mod(m - TABLES[px.t - 1].findIndex(a => a.includes(an)));
+  const seq = px.mode === "all" ? "" : `<p>同一張表，${PX_SEC[px.mode].slice(2)}的順序對兩人完全相同；A 命在${an}之後第 ${step(A)} 步，B 命在第 ${step(B)} 步，所以 B 看到的每一宮都是 A 的盤轉 ${Z.mod(B - A)} 宮。</p>`;
+  return `<p><b>B 命（${BR[B]}）是 A 的${palOf(A, B)}；A 命（${BR[A]}）是 B 的${palOf(B, A)}。兩命宮的關係：${rel}。</b></p>
+    <p>三方四正重疊 ${both.length} 宮${both.length ? "：" + both.map(x => BR[x] + "（A " + palOf(A, x) + "／B " + palOf(B, x) + "）").join("、") : ""}。${rel === "暗合" ? "暗合是三方四正之外唯一的連結（地支六合）。" : ""}</p>${seq}`;
 }
 function renderPanxing() {
   if (view() !== "panxing") return;
   flush();
   const chain = px.mode === "all" ? "" : (() => { const C = CHAIN[px.mode], inv = Object.fromEntries(Object.entries(C).map(([s, o]) => [o, s])); return `<p class="pxchain">固定順序（十二表都一樣）：${Array.from({ length: 12 }, (_, k) => inv[k] ? pxStar(inv[k]) : '<span class="borrow">○</span>').join(" → ")}</p>`; })();
-  const A = px.a, info = px.mode === "all" ? `<div class="card pxinfo"><p><b>盤 A 的盤性：${storyOf(A.t)}</b>（鏡像表：表${Z.mod(A.t + 5) + 1}）・${familyOf(A.t)}</p><p>三合骨架：${SKELETON[storyD(A.t) % 4]}。同家族的三種盤性三合完全相同，只在對宮、同宮、夾宮不同；144 格的三合組合只有 8 種。</p></div>` : "";
+  const info = px.mode === "all" ? `<div class="card pxinfo"><p><b>表${px.t} 的盤性：${storyOf(px.t)}</b>（鏡像表：表${Z.mod(px.t + 5) + 1}）・${familyOf(px.t)}</p><p>三合骨架：${SKELETON[storyD(px.t) % 4]}。同家族的三種盤性三合完全相同，只在對宮、同宮、夾宮不同。要比較不同表，用「144 格總覽」的「鏡像成對＋從紫微宮起算」。</p></div>` : "";
+  const mchips = (w, cur) => [...BR].map((b, i) => `<button class="chip" data-px${w}="${i}" aria-pressed="${cur === i}">命${b}</button>`).join("");
   $("#v-panxing").innerHTML = `
     <p class="note-src">先單看一個星系：命宮換到別的宮位，星的順序不變，看到的邏輯就雷同。再合併兩系：十二表 × 十二命宮 = 144 種盤，只有六種盤性。<span class="pzw">紅字</span>是紫微系，<span class="ptf">藍字</span>是天府系。</p>
     <div class="chips pxmode">${PX_MODES.map(([v, t]) => `<button class="chip" data-pxmode="${v}" aria-pressed="${px.mode === v}">${t}</button>`).join("")}</div>
     <div class="pxdrill">${PX_DRILL[px.mode].map(([n, q], i) => `<button class="chip" data-pxdrill="${i}">${n}</button><span>${q}</span>`).join("")}</div>
     ${chain}${info}
-    <div class="picker">${pxPicker("a", px.a)}${px.b ? pxPicker("b", px.b) : '<label>比較</label><div><button class="chip" data-pxon>加一個盤 B 來比較</button></div>'}</div>
-    <div class="pxcharts ${px.b ? "two" : ""}">${pxChart("a", px.a)}${px.b ? pxChart("b", px.b) : ""}</div>
-    ${px.b ? `<div class="card pxcmp">${pxCompare()}</div>` : ""}
+    <div class="picker">
+      <label>表號</label><div class="chips">${TABLES.map((_, i) => `<button class="chip" data-pxt="${i + 1}" aria-pressed="${px.t === i + 1}">表${i + 1}<span class="s">紫${BR[i]}</span></button>`).join("")}</div>
+      <label class="la">A 命</label><div class="chips">${mchips("a", px.a)}</div>
+      <label class="lb">B 命</label><div class="chips">${px.b == null ? '<button class="chip" data-pxon>加一個 B 命來比較</button>' : mchips("b", px.b) + '<button class="chip" data-pxoff>關閉 B</button>'}</div>
+      <label>標記</label><div class="chips"><button class="chip" data-pxsf aria-pressed="${px.sf}">標出三方四正</button></div>
+    </div>
+    <div class="pxcharts">${pxChart()}</div>
+    <div class="legend"><span><b class="la">A</b> 的宮位名稱</span>${px.b != null ? '<span><b class="lb">B</b> 的宮位名稱</span>' : ""}<span>粗框：命宮</span>${px.sf ? "<span>右上角小字：屬於誰的三方四正</span>" : ""}</div>
+    ${px.b != null ? `<div class="card pxcmp">${pxCompare()}</div>` : ""}
     <h3 class="pxh">從命宮順數十二宮</h3>
-    <div class="pxw"><table class="pxseq"><tbody>${pxSeq(px.a)}${px.b ? pxSeq(px.b) : ""}</tbody></table></div>
+    <div class="pxw"><table class="pxseq"><tbody>${pxSeq(px.a, "A")}${px.b != null ? pxSeq(px.b, "B") : ""}</tbody></table></div>
     <div id="pxNotes">${editorHTML(Z.PATH.panxing, "盤性心得", px.mode === "all" ? ["合併看", "六種盤性"] : [PX_SEC[px.mode]])}</div>`;
 }
 $("#v-panxing").addEventListener("click", e => {
-  const d = e.target.closest("[data-pxmode],[data-pxdrill],[data-pxt],[data-pxm],[data-pxb],[data-pxon],[data-pxoff]"); if (!d) return;
-  const ds = d.dataset, set = (v, f) => { const [w, x] = v.split(":"); px[w] = { ...px[w], [f]: +x }; };
-  if (ds.pxmode) { px.mode = ds.pxmode; const [, , a, b] = PX_DRILL[px.mode][0]; px.a = { ...a }; px.b = b && { ...b }; }
-  else if (ds.pxdrill) { const [, , a, b] = PX_DRILL[px.mode][+ds.pxdrill]; px.a = { ...a }; px.b = b && { ...b }; }
-  else if (ds.pxt) set(ds.pxt, "t");
-  else if (ds.pxm) set(ds.pxm, "m");
-  else if (ds.pxb) set(ds.pxb, "m");
-  else if ("pxon" in ds) px.b = { ...px.a };
+  const d = e.target.closest("[data-pxmode],[data-pxdrill],[data-pxt],[data-pxa],[data-pxb],[data-pxon],[data-pxoff],[data-pxsf]"); if (!d) return;
+  const ds = d.dataset, drill = i => { const [, , t, a, b] = PX_DRILL[px.mode][i]; Object.assign(px, { t, a, b }); };
+  if (ds.pxmode) { px.mode = ds.pxmode; drill(0); }
+  else if (ds.pxdrill) drill(+ds.pxdrill);
+  else if (ds.pxt) px.t = +ds.pxt;
+  else if (ds.pxa) px.a = +ds.pxa;
+  else if (ds.pxb) { if (d.classList.contains("pal") && px.b == null) px.a = +ds.pxb; else px.b = +ds.pxb; }
+  else if ("pxon" in ds) px.b = Z.mod(px.a + 6);
   else if ("pxoff" in ds) px.b = null;
+  else if ("pxsf" in ds) px.sf = !px.sf;
   renderPanxing();
 });
-$("#v-panxing").addEventListener("keydown", e => { const p = e.target.closest("[data-pxb]"); if (p && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); p.click(); } });
+$("#v-panxing").addEventListener("keydown", e => { const p = e.target.closest(".pal[data-pxb]"); if (p && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); p.click(); } });
 
 /* ───────── 格局總表 ───────── */
 function renderPatterns() {
@@ -1270,7 +1279,7 @@ function renderHelp() {
     <li><b>逐格研讀</b>：選表號和命宮，看盤面、三方四正、格局古訣、鏡像格。</li>
     <li><b>寫筆記</b>：盤面下方直接打字，會自動存檔。</li>
     <li><b>144 格總覽</b>：列可改「鏡像成對」，欄可改「從紫微宮起算」，鏡像兩表會排成一模一樣的兩列；可依命宮主星、格局、研讀狀態篩選。</li>
-    <li><b>盤性學習</b>：先單看天府系、再單看紫微系，最後合併看。可加一個盤 B 比較，看出命宮換位時星的順序不變，十二表 × 十二命宮只有六種盤性。三種看法各有一段心得筆記（<code>盤性/盤性心得.md</code>）。</li>
+    <li><b>盤性學習</b>：先單看天府系、再單看紫微系，最後合併看。可在同一張表加一個 B 命，同一個盤上用兩種顏色標出 A、B 的宮位名稱與三方四正，看兩個命宮合在一起的關係。三種看法各有一段心得筆記（<code>盤性/盤性心得.md</code>）。</li>
     <li><b>看進度</b>：「開始」頁會顯示讀到哪裡，並帶你讀下一格。</li>
     <li><b>練習</b>：隨機出題，答錯的題目之後會再出現。</li>
     <li><b>四化學習</b>：「四化星性」熟記十干四化並寫星性筆記；「四化入表」看四化在十二表中同宮、三合、對宮、暗合的分布，與四化相關的輔星、煞星可選擇安或不安：祿存、羊陀、魁鉞隨天干自動排；左右指定一顆，另一顆自動安上；昌曲、空劫共用一個時辰，指定任一顆，另一組一起移動，不會排出不存在的盤。火鈴和四化無關，不安。安上後會列出四化同宮、被夾、三方四正會照的星。</li>

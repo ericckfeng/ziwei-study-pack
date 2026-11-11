@@ -325,3 +325,15 @@ table.pxseq .pp{font-family:var(--f-body);font-weight:400;font-size:12px;color:v
 table.pxseq .pp small{margin-left:3px}
 table.ov{table-layout:fixed}
 table.ov thead th:first-child{width:92px}
+/* 盤性學習：A、B 雙命宮 */
+.la{color:var(--cinnabar)}.lb{color:var(--jade)}
+.pal.pxp{padding-bottom:6px}
+.pxp .pnn{margin-top:auto;display:flex;gap:8px;font-size:12px;font-weight:700;letter-spacing:.03em}
+.pxp .br{bottom:auto;top:4px;right:6px}
+.pxp .sfm{position:absolute;right:22px;top:4px;display:flex;gap:2px}
+.pxp .sfm i{font-style:normal;font-size:10px;line-height:1.4;padding:0 3px;border-radius:2px;font-weight:700}
+.pxp .sfm i.ma{border:1px solid var(--cinnabar);color:var(--cinnabar)}
+.pxp .sfm i.mb{border:1px solid var(--jade);color:var(--jade)}
+.pal.pxp.ma0{box-shadow:inset 0 0 0 3px var(--cinnabar)}
+.pal.pxp.mb0{box-shadow:inset 0 0 0 3px var(--jade)}
+.pal.pxp.ma0.mb0{box-shadow:inset 0 0 0 3px var(--cinnabar),inset 0 0 0 6px var(--jade)}
