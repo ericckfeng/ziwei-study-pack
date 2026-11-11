@@ -294,3 +294,34 @@ table.dims tbody th small{display:block;font-family:var(--f-body);font-weight:40
 .steps{padding-left:1.3em;margin:0;font-size:14px;display:grid;gap:8px}
 .steps em{font-style:normal;color:var(--cinnabar)}
 .alt{display:block;font-size:12px;font-weight:400;color:var(--gold);font-family:var(--f-body)}
+/* 144 格總覽：控制列、篩選、固定表頭 */
+.ovctl .picker{margin-bottom:8px}
+.ovf{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.ovf select{font:inherit;font-size:13px;padding:3px 6px;border:1px solid var(--rule);background:var(--sheet);color:var(--ink);border-radius:3px;max-width:100%}
+.ovf b{font-size:13px;color:var(--cinnabar)}
+.ovw{max-height:78vh;overflow:auto}
+table.ov thead th{position:sticky;top:0;z-index:2}
+table.ov tbody th{position:sticky;left:0;z-index:1}
+table.ov tr.grp th{position:static;text-align:left;background:var(--gold-soft);color:var(--gold);font-family:var(--f-display);font-size:13px;padding:5px 10px}
+table.ov td button.dim{opacity:.22}
+table.ov td button.hit{box-shadow:inset 0 0 0 2px var(--cinnabar)}
+table.ov td button .bz{position:absolute;right:3px;top:2px;font-family:var(--f-body);font-weight:400;font-size:10px;color:var(--ink-2)}
+/* 盤性學習 */
+.pzw{color:var(--cinnabar)}.ptf{color:var(--indigo)}
+.pxmode{margin:8px 0}
+.pxdrill{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;align-items:center;margin:10px 0;font-size:14px}
+.pxchain{font-family:var(--f-display);font-weight:700;line-height:1.8}
+.pxcharts{display:grid;gap:14px;margin:10px 0}
+.pxcharts.two{grid-template-columns:1fr 1fr}
+@media (max-width:820px){.pxcharts.two{grid-template-columns:1fr}}
+.pxcmp,.pxinfo{margin:10px 0}
+.pxh{font-family:var(--f-display);margin:16px 0 6px}
+.pxw{overflow-x:auto;border:1px solid var(--rule);background:var(--sheet)}
+table.pxseq{border-collapse:collapse;min-width:820px;width:100%;font-size:13px}
+table.pxseq th,table.pxseq td{border:1px solid var(--rule);padding:4px;text-align:center;vertical-align:top}
+table.pxseq th{background:var(--paper);white-space:nowrap;font-weight:500}
+table.pxseq td{font-family:var(--f-display);font-weight:700}
+table.pxseq .pp{font-family:var(--f-body);font-weight:400;font-size:12px;color:var(--ink-2);border-bottom:1px dashed var(--rule);margin-bottom:3px}
+table.pxseq .pp small{margin-left:3px}
+table.ov{table-layout:fixed}
+table.ov thead th:first-child{width:92px}

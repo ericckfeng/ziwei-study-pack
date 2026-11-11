@@ -487,6 +487,7 @@ const PATH = {
   huaIndex: "四化/十干四化.md",
   myHua: "四化/我的四化星性.md",
   diary: d => `四化日記/${d}.md`,
+  panxing: "盤性/盤性心得.md",
 };
 
 /* ───────── 可編輯段落與寫作引導 ───────── */
@@ -507,6 +508,12 @@ const EDIT = {
     ["我的心得", "用三個關鍵詞形容這顆星；它和哪顆星同宮時變化最大？"],
   ],
   "四化星性": HUA_NAMES.map(n => [n, "書中重點（註明頁碼）、你自己的理解、生活中遇到的例子。"]),
+  "盤性": [
+    ["單看天府系", "命宮換到不同宮位時，天府系八顆星的順序有沒有變？你從哪裡看出「思維邏輯雷同」？"],
+    ["單看紫微系", "紫微系六顆星的間距是什麼？和天府系比，哪裡相同、哪裡不同？"],
+    ["合併看", "兩系合起來後，哪些表的盤性相同？三合骨架只分兩種，對宮怎麼分出六種？"],
+    ["六種盤性", "用自己的話寫下六種盤性各自的特點，以及鏡像兩表的差別（地支、晝夜、廟旺）。"],
+  ],
   "四化日記": [
     ["今日事件", "今天發生了什麼事、起了什麼念頭？照實記下，先不要解釋。"],
     ["對應四化", "哪件事像化祿、化權、化科、化忌？對應到哪顆星的星性？"],
@@ -904,6 +911,9 @@ tags: [紫微144格]
 ## 建議順序
 十四主星 → 表一逐格（命子到命亥）→ 鏡像表七 → 表二↔表八 …… 共六對。每讀完一表，回 [[格局總表]] 核對古訣，再讀 [[暗合]]。研習頁的「今日一格」會照這個順序帶你走。
 
+## 盤性學習
+先單看天府系：命宮換到別的宮位，八顆星的順序不變。再單看紫微系，最後合併兩系：144 格只有六種盤性。研習頁「盤性學習」分頁可以加一個盤 B 比較，心得寫在 \`盤性/盤性心得.md\`。「144 格總覽」的欄改成「從紫微宮起算」，鏡像兩表會排成相同的兩列。
+
 ## 練習
 研習頁的「練習」分頁會出題：某格命宮坐什麼星、成什麼格、鏡像格是哪一格。答錯的題目之後會再出現。
 
@@ -979,6 +989,18 @@ ${BOOK.OVERLAY.map(([k, a, b]) => `- **${k}**：${a}（${b}）`).join("\n")}
 ${txt}
 `);
 }
+function panxingNote() {
+  return clean(`---
+title: 盤性心得
+類型: 盤性
+tags: [紫微盤性]
+---
+# 盤性心得
+
+研習頁「盤性學習」分頁的筆記。先單看天府系、再單看紫微系，最後合併看：十二表 × 十二命宮共 144 種盤，只有六種盤性。見 [[README]]。
+
+` + EDIT["盤性"].map(([n]) => `## ${n}\n\n`).join("\n"));
+}
 function myHuaNote() {
   return clean(`---
 title: 我的四化星性
@@ -1034,6 +1056,7 @@ function allNotes(date) {
   BOOKS.forEach(b => out.push({ path: PATH.book(b[0]), text: bookNote(b) }));
   out.push({ path: PATH.huaIndex, text: huaIndexNote() });
   out.push({ path: PATH.myHua, text: myHuaNote() });
+  out.push({ path: PATH.panxing, text: panxingNote() });
   out.push({ path: "README.md", text: readmeNote() });
   out.push({ path: "暗合.md", text: anheNote() });
   out.push({ path: "使用說明.md", text: guideNote() });
@@ -1147,7 +1170,7 @@ function normalizeImportPath(p) {
   p = p.replace(/\\/g, "/");
   const i = p.indexOf("筆記/");
   if (i >= 0) return p.slice(i + 3);
-  for (const top of ["144格/", "格局/", "十四主星/", "書目/", "四化/", "四化日記/"]) { const j = p.indexOf(top); if (j >= 0) return p.slice(j); }
+  for (const top of ["144格/", "格局/", "十四主星/", "書目/", "四化/", "四化日記/", "盤性/"]) { const j = p.indexOf(top); if (j >= 0) return p.slice(j); }
   return p.split("/").pop();
 }
 
