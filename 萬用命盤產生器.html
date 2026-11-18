@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>萬用命盤產生器 (研究專用版)</title>
+    <style id="pageStyle">
+        @page {
+            size: A4 portrait;
+            margin: 1cm;
+        }
+    </style>
+    <style>
+        body {
+            font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        /* 控制面板樣式 (不列印) */
+        .controls {
+            background-color: #fff;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .control-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background-color: #f8f9fa;
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+        }
+        .controls label {
+            font-weight: bold;
+            color: #333;
+            cursor: pointer;
+        }
+        .controls select, .controls input[type="text"] {
+            padding: 4px 8px;
+            font-size: 1em;
+            font-family: inherit;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .controls button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 6px 15px;
+            font-size: 1em;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .controls button:hover {
+            background-color: #0056b3;
+        }
+        .btn-print {
+            background-color: #28a745 !important;
+        }
+        .btn-print:hover {
+            background-color: #218838 !important;
+        }
+        
+        /* 命盤樣式 */
+        .page {
+            background-color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 21cm;
+            height: 27cm;
+            box-sizing: border-box;
+            padding: 1cm;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .chart-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            width: 100%;
+            height: 25cm; /* 固定高度解決列印時可能縮放崩潰的問題 */
+            border: 2px solid #333;
+        }
+        .palace {
+            border: 1px solid #333;
+            padding: 6px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .page.landscape {
+            width: 28cm;
+            height: 19cm;
+        }
+        .page.landscape .chart-container {
+            height: 17cm;
+        }
+        .center-palace {
+            grid-column: 2 / 4;
+            grid-row: 2 / 4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            border: 1px solid #333;
+            position: relative;
+        }
+        .stars-container {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .major-stars {
+            color: #b30000;
+            font-weight: bold;
+            font-size: 1.15em;
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            min-height: 1.5em;
+        }
+        .lucky-stars {
+            color: #0056b3;
+            font-size: 0.95em;
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        .bad-stars {
+            color: #333;
+            font-size: 0.95em;
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        .bottom-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-top: auto;
+        }
+        .palace-name {
+            font-weight: bold;
+            background-color: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+        .branch {
+            font-size: 0.95em;
+            color: #555;
+            font-weight: bold;
+        }
+        
+        .sihua-tag {
+            font-size: 0.8em;
+            margin-left: 2px;
+        }
+        .tag-lu { color: #28a745; }
+        .tag-quan { color: #0056b3; }
+        .tag-ke { color: #6f42c1; }
+        .tag-ji { color: #333; }
+
+        @media print {
+            body { background-color: #fff; padding: 0; }
+            .controls { display: none; }
+            .page { box-shadow: none; width: 100%; height: 27cm; padding: 0; margin: 0; }
+            .page.landscape { height: 19cm; }
+            .chart-container { height: 25cm; }
+            .page.landscape .chart-container { height: 17cm; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="controls no-print">
+    <!-- Row 1: Layer & Orientation Control -->
+    <div class="control-row" style="background-color:#e9ecef; padding:8px; border-radius:6px; justify-content: space-between;">
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <label>顯示圖層：</label>
+            <label><input type="radio" name="layer" value="1" onchange="generateChart()"> 1: 基本盤</label>
+            <label><input type="radio" name="layer" value="2" onchange="generateChart()"> 2: +四化</label>
+            <label><input type="radio" name="layer" value="3" onchange="generateChart()"> 3: +十二宮</label>
+            <label><input type="radio" name="layer" value="4" onchange="generateChart()" checked> 4: +吉煞祿馬</label>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center; border-left: 2px solid #ccc; padding-left: 15px;">
+            <label>版面方向：</label>
+            <label><input type="radio" name="orientation" id="oriPortrait" value="portrait" onchange="changeOrientation()" checked> 直式 (A4)</label>
+            <label><input type="radio" name="orientation" id="oriLandscape" value="landscape" onchange="changeOrientation()"> 橫式 (PPT)</label>
+        </div>
+    </div>
+
+    <!-- Row 2: Basic Inputs -->
+    <div class="control-row">
+        <div class="control-group">
+            <label>表號：</label>
+            <select id="tableNum" onchange="generateChart()"></select>
+        </div>
+        <div class="control-group">
+            <label>年干：</label>
+            <select id="yearStem" onchange="generateChart()"></select>
+        </div>
+        <div class="control-group">
+            <label>命宮：</label>
+            <select id="destinyBranch" onchange="generateChart()"></select>
+        </div>
+        <div class="control-group">
+            <label>年支：</label>
+            <select id="yearBranch" onchange="generateChart()"></select>
+        </div>
+        <div class="control-group">
+            <label>生月：</label>
+            <select id="birthMonth" onchange="generateChart()"></select>
+        </div>
+        <div class="control-group">
+            <label>生時：</label>
+            <select id="birthTime" onchange="generateChart()"></select>
+        </div>
+    </div>
+    
+    <!-- Row 3: Custom Text -->
+    <div class="control-row">
+        <div class="control-group">
+            <label>姓名：</label>
+            <input type="text" id="pName" placeholder="命盤主人姓名" oninput="generateChart()">
+        </div>
+        <div class="control-group">
+            <label>備註：</label>
+            <textarea id="pNotes" placeholder="可輸入多行備註 (最多100字)" maxlength="100" oninput="generateChart()" style="width:300px; height: 40px; resize:none; font-family:inherit; padding: 4px; border: 1px solid #ccc; border-radius: 4px;"></textarea>
+        </div>
+    </div>
+
+    <!-- Row 4: Code Restore & Action -->
+    <div class="control-row" style="margin-top:5px;">
+        <div class="control-group" style="background-color:#ffeeba; border-color:#ffc107;">
+            <label>還原碼：</label>
+            <input type="text" id="loadCode" maxlength="13" placeholder="貼上 13 碼" style="width:120px; font-family:monospace;">
+            <button onclick="loadFromCode()" style="background-color:#ffc107; color:#333;">🔄 還原</button>
+        </div>
+        <div style="flex-grow:1;"></div>
+        <button class="btn-print" onclick="generateChart(); window.print()">🖨️ 列印命盤 (Ctrl+P)</button>
+    </div>
+</div>
+
+<div class="page" id="printableArea">
+    <div class="chart-container" id="chartContainer">
+        <!-- JS Generating Grid -->
+    </div>
+</div>
+
+<script>
+    // Data definition. Index 1-indexed to match generation codes.
+    const stems = ["", "甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"];
+    const branches = ["", "子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
+    const palaceNames = ["命宮", "兄弟", "夫妻", "子女", "財帛", "疾厄", "遷移", "交友", "事業", "田宅", "福德", "父母"];
+
+    const sihuaMap = {
+        "甲": {"祿": "廉貞", "權": "破軍", "科": "武曲", "忌": "太陽"},
+        "乙": {"祿": "天機", "權": "天梁", "科": "紫微", "忌": "太陰"},
+        "丙": {"祿": "天同", "權": "天機", "科": "文昌", "忌": "廉貞"},
+        "丁": {"祿": "太陰", "權": "天同", "科": "天機", "忌": "巨門"},
+        "戊": {"祿": "貪狼", "權": "太陰", "科": "右弼", "忌": "天機"},
+        "己": {"祿": "武曲", "權": "貪狼", "科": "天梁", "忌": "文曲"},
+        "庚": {"祿": "太陽", "權": "武曲", "科": "天同", "忌": "太陰"}, // 陽武同陰
+        "辛": {"祿": "巨門", "權": "太陽", "科": "文曲", "忌": "文昌"},
+        "壬": {"祿": "天梁", "權": "紫微", "科": "左輔", "忌": "武曲"},
+        "癸": {"祿": "破軍", "權": "巨門", "科": "太陰", "忌": "貪狼"}
+    };
+
+    window.onload = () => {
+        const tableSel = document.getElementById("tableNum");
+        for(let i=1; i<=12; i++) { tableSel.add(new Option(i, i)); }
+        
+        const stemSel = document.getElementById("yearStem");
+        for(let i=1; i<=10; i++) { stemSel.add(new Option(stems[i], i)); }
+        stemSel.value = 6; // 己
+        
+        const branchSel = document.getElementById("destinyBranch");
+        for(let i=1; i<=12; i++) { branchSel.add(new Option(branches[i], i)); }
+        
+        const ybSel = document.getElementById("yearBranch");
+        for(let i=1; i<=12; i++) { ybSel.add(new Option(branches[i], i)); }
+        ybSel.value = 10; // 酉
+        
+        const moSel = document.getElementById("birthMonth");
+        for(let i=1; i<=12; i++) { moSel.add(new Option(i + "月", i)); }
+        
+        const tSel = document.getElementById("birthTime");
+        for(let i=1; i<=12; i++) { tSel.add(new Option(branches[i] + "時", i)); }
+        
+        generateChart();
+    };
+
+    function changeOrientation() {
+        const isLandscape = document.getElementById("oriLandscape").checked;
+        const page = document.getElementById("printableArea");
+        const styleBlock = document.getElementById("pageStyle");
+        
+        if (isLandscape) {
+            page.classList.add("landscape");
+            styleBlock.innerHTML = "@page { size: A4 landscape; margin: 1cm; }";
+        } else {
+            page.classList.remove("landscape");
+            styleBlock.innerHTML = "@page { size: A4 portrait; margin: 1cm; }";
+        }
+    }
+
+    function pad2(num) {
+        return num.toString().padStart(2, '0');
+    }
+
+    function loadFromCode() {
+        let code = document.getElementById("loadCode").value.trim();
+        if (code.length !== 13 || isNaN(code)) {
+            alert("錯誤：生成碼必須為剛好 13 碼的數字！");
+            return;
+        }
+        
+        let t = parseInt(code.substring(0, 2));
+        let s = parseInt(code.substring(2, 4));
+        let d = parseInt(code.substring(4, 6));
+        let y = parseInt(code.substring(6, 8));
+        let m = parseInt(code.substring(8, 10));
+        let h = parseInt(code.substring(10, 12));
+        let l = parseInt(code.substring(12, 13));
+
+        if(t >= 1 && t <= 12) document.getElementById("tableNum").value = t;
+        if(l >= 1 && l <= 4) document.querySelector(`input[name="layer"][value="${l}"]`).checked = true;
+        if(s >= 1 && s <= 10) document.getElementById("yearStem").value = s;
+        if(d >= 1 && d <= 12) document.getElementById("destinyBranch").value = d;
+        if(y >= 1 && y <= 12) document.getElementById("yearBranch").value = y;
+        if(m >= 1 && m <= 12) document.getElementById("birthMonth").value = m;
+        if(h >= 1 && h <= 12) document.getElementById("birthTime").value = h;
+
+        generateChart();
+    }
+
+    function getMajorStars(tableNum) {
+        const ziweiPos = (tableNum - 1) % 12;
+        const palaces = Array(12).fill().map(() => []);
+        
+        palaces[ziweiPos].push("紫微");
+        palaces[(ziweiPos - 1 + 12) % 12].push("天機");
+        palaces[(ziweiPos - 3 + 12) % 12].push("太陽");
+        palaces[(ziweiPos - 4 + 12) % 12].push("武曲");
+        palaces[(ziweiPos - 5 + 12) % 12].push("天同");
+        palaces[(ziweiPos - 8 + 12) % 12].push("廉貞");
+        
+        const tianfuPos = (4 - ziweiPos + 12) % 12;
+        palaces[tianfuPos].push("天府");
+        palaces[(tianfuPos + 1) % 12].push("太陰");
+        palaces[(tianfuPos + 2) % 12].push("貪狼");
+        palaces[(tianfuPos + 3) % 12].push("巨門");
+        palaces[(tianfuPos + 4) % 12].push("天相");
+        palaces[(tianfuPos + 5) % 12].push("天梁");
+        palaces[(tianfuPos + 6) % 12].push("七殺");
+        palaces[(tianfuPos + 10) % 12].push("破軍");
+        
+        return palaces;
+    }
+
+    function generateChart() {
+        // Read Inputs
+        const layer = parseInt(document.querySelector('input[name="layer"]:checked').value);
+        const tableNum = parseInt(document.getElementById("tableNum").value);
+        const stemIdx = parseInt(document.getElementById("yearStem").value);
+        const destIdx = parseInt(document.getElementById("destinyBranch").value);
+        const yearBIdx = parseInt(document.getElementById("yearBranch").value);
+        const month = parseInt(document.getElementById("birthMonth").value);
+        const timeIdx = parseInt(document.getElementById("birthTime").value);
+        
+        const pName = document.getElementById("pName").value.trim();
+        const pNotes = document.getElementById("pNotes").value.trim();
+        
+        // Generate Code
+        let codeS = layer >= 2 ? pad2(stemIdx) : "00";
+        let codeD = layer >= 3 ? pad2(destIdx) : "00";
+        let codeY = layer >= 4 ? pad2(yearBIdx) : "00";
+        let codeM = layer >= 4 ? pad2(month) : "00";
+        let codeH = layer >= 4 ? pad2(timeIdx) : "00";
+        const genCode = pad2(tableNum) + codeS + codeD + codeY + codeM + codeH + layer;
+        
+        const majorStars = getMajorStars(tableNum);
+        
+        // Arrays for layer 4
+        const luckyStars = Array(12).fill().map(() => []);
+        const badStars = Array(12).fill().map(() => []);
+
+        let stemStr = stems[stemIdx];
+        let yearBStr = branches[yearBIdx];
+        
+        if (layer >= 4) {
+            // 1. 祿存、羊、陀
+            const luCunMap = {"甲":2, "乙":3, "丙":5, "丁":6, "戊":5, "己":6, "庚":8, "辛":9, "壬":11, "癸":0};
+            let luCunIdx = luCunMap[stemStr];
+            luckyStars[luCunIdx].push("祿存");
+            badStars[(luCunIdx + 1) % 12].push("擎羊");
+            badStars[(luCunIdx - 1 + 12) % 12].push("陀羅");
+
+            // 2. 天魁、天鉞
+            const kuiYueMap = {
+                "甲":[1,7], "戊":[1,7], "庚":[1,7],
+                "乙":[0,8], "己":[0,8],
+                "丙":[11,9], "丁":[11,9],
+                "辛":[6,2],
+                "壬":[3,5], "癸":[3,5]
+            };
+            luckyStars[kuiYueMap[stemStr][0]].push("天魁");
+            luckyStars[kuiYueMap[stemStr][1]].push("天鉞");
+
+            // 3. 左輔、右弼 (0-indexed offset = month - 1)
+            let zuoFuIdx = (4 + month - 1) % 12; // 辰(4)
+            let youBiIdx = (10 - (month - 1) + 12) % 12; // 戌(10)
+            luckyStars[zuoFuIdx].push("左輔");
+            luckyStars[youBiIdx].push("右弼");
+
+            // 4. 文昌、文曲 (0-indexed offset = timeIdx - 1)
+            let wTime = timeIdx - 1;
+            let wenChangIdx = (10 - wTime + 12) % 12;
+            let wenQuIdx = (4 + wTime) % 12;
+            luckyStars[wenChangIdx].push("文昌");
+            luckyStars[wenQuIdx].push("文曲");
+
+            // 5. 地空、地劫
+            let diKongIdx = (11 - wTime + 12) % 12;
+            let diJieIdx = (11 + wTime) % 12;
+            badStars[diKongIdx].push("地空");
+            badStars[diJieIdx].push("地劫");
+
+            // 6. 火星、鈴星
+            let huoStart, lingStart;
+            if (["寅","午","戌"].includes(yearBStr)) { huoStart = 1; lingStart = 3; }
+            else if (["申","子","辰"].includes(yearBStr)) { huoStart = 2; lingStart = 10; }
+            else if (["巳","酉","丑"].includes(yearBStr)) { huoStart = 3; lingStart = 10; }
+            else { huoStart = 9; lingStart = 10; }
+            
+            badStars[(huoStart + wTime) % 12].push("火星");
+            badStars[(lingStart + wTime) % 12].push("鈴星");
+            
+            // 7. 天馬
+            let tianMaIdx = 0;
+            if (["寅","午","戌"].includes(yearBStr)) tianMaIdx = 8; // 申
+            else if (["申","子","辰"].includes(yearBStr)) tianMaIdx = 2; // 寅
+            else if (["巳","酉","丑"].includes(yearBStr)) tianMaIdx = 11; // 亥
+            else if (["亥","卯","未"].includes(yearBStr)) tianMaIdx = 5; // 巳
+            luckyStars[tianMaIdx].push("天馬");
+        }
+
+        // 宮位計算
+        const palaceMapping = {};
+        if (layer >= 3) {
+            let dIdx = destIdx - 1;
+            for(let i=0; i<12; i++){
+                let branchIdx = (dIdx - i + 12) % 12;
+                palaceMapping[branchIdx] = palaceNames[i];
+            }
+        }
+
+        // 渲染 HTML
+        const divOrder = [
+            [5, 6, 7, 8],
+            [4, null, null, 9],
+            [3, null, null, 10],
+            [2, 1, 0, 11]
+        ];
+
+        let html = "";
+        let sh = layer >= 2 ? sihuaMap[stemStr] : null;
+
+        for(let r=0; r<4; r++) {
+            for(let c=0; c<4; c++) {
+                let branchIdx = divOrder[r][c];
+                if (branchIdx === null) {
+                    if (r===1 && c===1) {
+                        html += `<div class="center-palace">
+                                    <div style="position:absolute; top:15px; left:15px; font-weight:bold; font-size:1.5em; background:#f0f0f0; padding:2px 8px; border-radius:4px;">表${tableNum}</div>
+                                    <div style="position:absolute; top:15px; right:15px; color:#555; font-size:0.9em; border:1px solid #ddd; padding:4px 6px; border-radius:4px; font-family:monospace; background:#fafafa;">生成碼：${genCode}</div>
+                                    
+                                    <div style="font-size:2em; font-weight:bold; margin-bottom:10px;">${pName}</div>
+                                    <div style="font-size:1.1em; color:#555; white-space:pre-wrap; max-width:85%; word-wrap:break-word; text-align:left;">${pNotes}</div>
+                                 </div>`;
+                    }
+                    continue;
+                }
+
+                let bName = branches[branchIdx + 1];
+                let pNameStr = layer >= 3 ? palaceMapping[branchIdx] : "";
+                
+                let majorHtml = majorStars[branchIdx].map(s => {
+                    let tag = "";
+                    if (sh) {
+                        if (s === sh['祿']) tag = `<span class="sihua-tag tag-lu">[祿]</span>`;
+                        else if (s === sh['權']) tag = `<span class="sihua-tag tag-quan">[權]</span>`;
+                        else if (s === sh['科']) tag = `<span class="sihua-tag tag-ke">[科]</span>`;
+                        else if (s === sh['忌']) tag = `<span class="sihua-tag tag-ji">[忌]</span>`;
+                    }
+                    return `<span>${s}${tag}</span>`;
+                }).join("");
+
+                let luckyHtml = "";
+                let badHtml = "";
+                if (layer >= 4) {
+                    luckyHtml = luckyStars[branchIdx].map(s => {
+                        let tag = "";
+                        if (sh) { // 吉星如文昌文曲也會四化
+                            if (s === sh['祿']) tag = `<span class="sihua-tag tag-lu">[祿]</span>`;
+                            else if (s === sh['權']) tag = `<span class="sihua-tag tag-quan">[權]</span>`;
+                            else if (s === sh['科']) tag = `<span class="sihua-tag tag-ke">[科]</span>`;
+                            else if (s === sh['忌']) tag = `<span class="sihua-tag tag-ji">[忌]</span>`;
+                        }
+                        return `<span>${s}${tag}</span>`;
+                    }).join("");
+                    badHtml = badStars[branchIdx].map(s => `<span>${s}</span>`).join("");
+                }
+
+                html += `<div class="palace">
+                            <div class="stars-container">
+                                <div class="major-stars">${majorHtml}</div>
+                                <div class="lucky-stars">${luckyHtml}</div>
+                                <div class="bad-stars">${badHtml}</div>
+                            </div>
+                            <div class="bottom-info">
+                                <span class="palace-name" style="${pNameStr ? '' : 'background:transparent;'}">${pNameStr}</span>
+                                <span class="branch">${bName}</span>
+                            </div>
+                         </div>`;
+            }
+        }
+        
+        document.getElementById("chartContainer").innerHTML = html;
+    }
+</script>
+</body>
+</html>
