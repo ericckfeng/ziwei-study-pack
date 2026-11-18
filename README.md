@@ -8,7 +8,7 @@
 npm run build      # 先驗證，再輸出 dist/紫微研習包/ 與 dist/紫微研習包.zip
 npm run verify     # 只跑驗證
 npm run workbook   # 產生 PDF 練習簿（需要 Chrome），之後的 build 會把它放進研習包與網站
-npm run deploy     # build 並複製網站版到 ../ericckfeng.github.io/ziwei-study-pack
+npm run deploy     # build 並發佈網站版到本倉庫的 gh-pages 分支（https://ericckfeng.github.io/ziwei-study-pack/）
 ```
 發給學員的是 `dist/紫微研習包.zip`。
 
